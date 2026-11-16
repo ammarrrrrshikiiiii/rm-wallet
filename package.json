@@ -1,0 +1,28 @@
+{
+  "name": "rm-wallet",
+  "version": "0.1.0",
+  "description": "RM Wallet — a personal finance tracker for students: track income, spending and monthly budgets in Malaysian Ringgit.",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "bun": ">=1.0.0"
+  },
+  "scripts": {
+    "start": "bun serve.js",
+    "dev": "bun serve.js",
+    "test": "bun test",
+    "check": "bun scripts/check.mjs",
+    "screenshot": "bun scripts/screenshot.mjs"
+  },
+  "keywords": [
+    "personal-finance",
+    "budget-tracker",
+    "student",
+    "bootstrap",
+    "chartjs"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "playwright": "^1.65.1"
+  }
+}
