@@ -1,5 +1,5 @@
 /* ===== RM Wallet – global styles ===== */
-:root{--ink:#10302f;--teal:#1f7a6d;--mint:#d9efe8;--amber:#e9a23b;--coral:#e0604a;--paper:#f5f7f4;--line:#dfe6e1}
+:root{--ink:#10302f;--teal:#1f7a6d;--mint:#d9efe8;--amber:#e9a23b;--coral:#b03a2e;--paper:#f5f7f4;--line:#dfe6e1}
 body{font-family:'DM Sans',sans-serif;background:var(--paper);color:var(--ink);min-height:100vh;display:flex;flex-direction:column}
 h1,h2,h3,h4,h5,.brand{font-family:'Bricolage Grotesque',sans-serif;letter-spacing:-.02em}
 main{flex:1}
@@ -18,11 +18,12 @@ main{flex:1}
 .stat-main{background:var(--ink);color:#fff;border:0}
 .stat-main .stat-label{color:#a9c7bf}
 .chart-box{position:relative;height:300px}
-.badge-income{background:var(--mint);color:var(--teal)}
+.badge-income{background:var(--mint);color:#175a4f}
 .badge-expense{background:#fbe3de;color:var(--coral)}
 .table thead th{font-size:.85rem;color:#5b7370;font-weight:600;border-bottom:2px solid var(--line)}
 .amt-in{color:var(--teal);font-weight:600}.amt-out{color:var(--coral);font-weight:600}
 .btn-teal{background:var(--teal);color:#fff;border:0}.btn-teal:hover{background:#17635a;color:#fff}
+.btn-outline-teal{background:transparent;color:var(--teal);border:1px solid var(--teal)}.btn-outline-teal:hover{background:var(--teal);color:#fff}
 footer{background:var(--ink);color:#a9c7bf;font-size:.9rem}
 footer a{color:#fff}
 /* Login */
