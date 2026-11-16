@@ -3,12 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; base-uri 'self'; form-action 'self'; object-src 'none'">
 <title>Sign in | RM Wallet</title>
 <meta name="description" content="Sign in to RM Wallet, a personal finance tracker that helps students track income, spending and budgets.">
-<meta name="author" content="RM Wallet – IMS566 Individual Project">
+<meta name="author" content="RM Wallet">
 <meta name="keywords" content="personal finance, budget tracker, student expenses, Bootstrap 5, Chart.js">
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" integrity="sha384-XGjxtQfXaH2tnPFa9x+ruJTuLE3Aa6LhHSWRr1XeTyhezb4abCG4ccI5AkVDxqC+" crossorigin="anonymous">
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
 <link href="css/style.css" rel="stylesheet">
 </head>
@@ -23,36 +25,16 @@
     <div class="w-100" style="max-width:380px">
       <h2 id="formTitle" class="mb-1">Sign in</h2>
       <p class="text-secondary">Demo account: <code>demo</code> / <code>Finance@123</code></p>
-      <div id="msg" class="alert alert-danger d-none" role="alert"></div>
-      <div class="mb-3"><label class="form-label" for="u">Username</label><input id="u" class="form-control" autocomplete="username"></div>
-      <div class="mb-3"><label class="form-label" for="p">Password</label><input id="p" type="password" class="form-control" autocomplete="current-password"></div>
-      <div id="confirmBox" class="mb-3 d-none"><label class="form-label" for="p2">Confirm password</label><input id="p2" type="password" class="form-control"></div>
-      <button id="go" class="btn btn-teal w-100 py-2">Sign in</button>
+      <div id="msg" class="alert alert-danger d-none" role="alert" aria-live="polite"></div>
+      <button id="fillDemo" class="btn btn-outline-teal w-100 mb-3" type="button"><i class="bi bi-magic me-1"></i>Use demo account</button>
+      <div class="mb-3"><label class="form-label" for="u">Username</label><input id="u" class="form-control" autocomplete="username" required></div>
+      <div class="mb-3"><label class="form-label" for="p">Password</label><input id="p" type="password" class="form-control" autocomplete="current-password" required></div>
+      <div id="confirmBox" class="mb-3 d-none"><label class="form-label" for="p2">Confirm password</label><input id="p2" type="password" class="form-control" autocomplete="new-password"></div>
+      <button id="go" type="button" class="btn btn-teal w-100 py-2">Sign in</button>
       <p class="mt-3 text-center small"><span id="swText">New here?</span> <a href="#" id="sw">Create an account</a></p>
     </div>
   </main>
 </div>
-<script>
-// Login / Register (simulated – registered users are kept in localStorage)
-let mode='login';
-const $=id=>document.getElementById(id), msg=(t,ok)=>{$('msg').textContent=t;$('msg').className='alert '+(ok?'alert-success':'alert-danger');};
-if(sessionStorage.getItem('rmUser')) location.replace('dashboard.html');
-$('sw').onclick=e=>{e.preventDefault();mode=mode==='login'?'register':'login';const r=mode==='register';
-  $('formTitle').textContent=r?'Create account':'Sign in';$('go').textContent=r?'Create account':'Sign in';
-  $('confirmBox').classList.toggle('d-none',!r);$('swText').textContent=r?'Already registered?':'New here?';
-  $('sw').textContent=r?'Sign in':'Create an account';$('msg').classList.add('d-none');};
-$('go').onclick=()=>{
-  const u=$('u').value.trim(), p=$('p').value, saved=JSON.parse(localStorage.getItem('rmUsers')||'{}');
-  if(!u||!p) return msg('Enter both username and password.');
-  if(mode==='register'){
-    if(p.length<6) return msg('Password must be at least 6 characters.');
-    if(p!==$('p2').value) return msg('Passwords do not match.');
-    if(u==='demo'||saved[u]) return msg('That username is taken. Try another.');
-    saved[u]=p; localStorage.setItem('rmUsers',JSON.stringify(saved)); $('sw').click(); return msg('Account created. Sign in below.',true);
-  }
-  if((u==='demo'&&p==='Finance@123')||saved[u]===p){ sessionStorage.setItem('rmUser',u); location.href='dashboard.html'; }
-  else msg('Invalid username or password. Check your details and try again.');
-};
-document.addEventListener('keydown',e=>{if(e.key==='Enter')$('go').click();});
-</script>
-</body></html>
+<script type="module" src="js/login.js"></script>
+</body>
+</html>
