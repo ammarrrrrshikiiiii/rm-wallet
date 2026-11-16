@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Check & test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.4.2"
+
+      # No `bun install` needed: the app has zero runtime npm dependencies
+      # (CDN assets are pinned with Subresource Integrity).
+
+      - name: Run static-site checks
+        run: bun run check
+
+      - name: Run tests
+        run: bun test
