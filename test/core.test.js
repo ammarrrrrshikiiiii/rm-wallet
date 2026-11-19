@@ -2,8 +2,10 @@ import { describe, expect, test } from 'bun:test';
 import {
   rm, totals, monthName, deriveCurrentMonth, monthsIn, spentInMonth,
   computeBudgets, filterTransactions, latestTransactions, savingsRate, escapeHtml,
+  safeToSpend, budgetTier, daysUntil, lastDayOfMonth, suggestCategory, toISODate,
+  transactionsToCSV, parseCSV, DAILY_LOW,
 } from '../js/core.js';
-import { TRANSACTIONS, BUDGETS } from '../js/data.js';
+import { TRANSACTIONS, BUDGETS, KEYWORD_RULES } from '../js/data.js';
 
 describe('rm currency formatter', () => {
   test('formats whole ringgit with two decimals', () => {
@@ -56,14 +58,14 @@ describe('month helpers', () => {
 
 describe('budget computations', () => {
   test('spentInMonth sums only expenses of the given category and month', () => {
-    expect(spentInMonth(TRANSACTIONS, 'Food', '2026-11')).toBe(290);
+    expect(spentInMonth(TRANSACTIONS, 'Food & Drink', '2026-11')).toBe(290);
     expect(spentInMonth(TRANSACTIONS, 'Housing', '2026-11')).toBe(450);
-    expect(spentInMonth(TRANSACTIONS, 'Food', '1999-01')).toBe(0);
+    expect(spentInMonth(TRANSACTIONS, 'Food & Drink', '1999-01')).toBe(0);
   });
   test('computeBudgets joins limits with spending', () => {
     const rows = computeBudgets(TRANSACTIONS, BUDGETS, '2026-11');
     const housing = rows.find((r) => r.cat === 'Housing');
-    const food = rows.find((r) => r.cat === 'Food');
+    const food = rows.find((r) => r.cat === 'Food & Drink');
     const entertainment = rows.find((r) => r.cat === 'Entertainment');
     expect(housing).toEqual({ cat: 'Housing', limit: 450, spent: 450, pct: 100, left: 0 });
     expect(food.pct).toBe(83);
@@ -81,8 +83,8 @@ describe('filtering and sorting', () => {
   test('filters by type and category', () => {
     const income = filterTransactions(TRANSACTIONS, { type: 'income' });
     expect(income.every((t) => t.type === 'income')).toBe(true);
-    const food = filterTransactions(TRANSACTIONS, { cat: 'Food' });
-    expect(food.every((t) => t.cat === 'Food')).toBe(true);
+    const food = filterTransactions(TRANSACTIONS, { cat: 'Food & Drink' });
+    expect(food.every((t) => t.cat === 'Food & Drink')).toBe(true);
   });
   test('sorts newest first', () => {
     const list = filterTransactions(TRANSACTIONS);
@@ -115,7 +117,7 @@ describe('escapeHtml', () => {
 
 describe('edge cases', () => {
   test('computeBudgets handles a zero limit without division by zero', () => {
-    const rows = computeBudgets(TRANSACTIONS, [{ cat: 'Food', limit: 0 }], '2026-11');
+    const rows = computeBudgets(TRANSACTIONS, [{ cat: 'Food & Drink', limit: 0 }], '2026-11');
     expect(rows[0].pct).toBe(0);
     expect(rows[0].left).toBe(-290);
   });
@@ -128,5 +130,76 @@ describe('edge cases', () => {
   test('monthName falls back to the input for out-of-range months', () => {
     expect(monthName('2026-13')).toBe('2026-13');
     expect(monthName('2026-00')).toBe('2026-00');
+  });
+});
+
+describe('safe-to-spend', () => {
+  test('divides remaining budget by days left', () => {
+    expect(safeToSpend(180, 10)).toEqual({ perDay: 18, days: 10, status: 'green' });
+  });
+  test('flags amber under the daily threshold and red when over budget', () => {
+    expect(safeToSpend(100, 10).perDay).toBe(10);
+    expect(safeToSpend(100, 10).status).toBe('amber');
+    expect(safeToSpend(0, 10).status).toBe('red');
+    expect(safeToSpend(-5, 10).status).toBe('red');
+  });
+  test('clamps days to at least one to avoid division by zero', () => {
+    expect(safeToSpend(50, 0).perDay).toBe(50);
+  });
+});
+
+describe('budgetTier', () => {
+  test('green under 70, amber 70-89, red 90+', () => {
+    expect(budgetTier(69)).toBe('green');
+    expect(budgetTier(70)).toBe('amber');
+    expect(budgetTier(89)).toBe('amber');
+    expect(budgetTier(90)).toBe('red');
+    expect(budgetTier(140)).toBe('red');
+  });
+});
+
+describe('date helpers', () => {
+  test('lastDayOfMonth', () => {
+    expect(lastDayOfMonth('2026-11')).toBe('2026-11-30');
+    expect(lastDayOfMonth('2026-02')).toBe('2026-02-28');
+    expect(lastDayOfMonth('2024-02')).toBe('2024-02-29');
+    expect(lastDayOfMonth('bad')).toBeNull();
+  });
+  test('daysUntil clamps at zero and counts forward', () => {
+    expect(daysUntil('2026-11-19', '2026-11-30')).toBe(11);
+    expect(daysUntil('2026-11-30', '2026-11-19')).toBe(0);
+    expect(daysUntil('2026-11-19', '2026-11-19')).toBe(0);
+  });
+  test('toISODate formats a Date', () => {
+    expect(toISODate(new Date(2026, 10, 19))).toBe('2026-11-19');
+  });
+});
+
+describe('keyword category suggestion', () => {
+  test('suggests from keywords', () => {
+    expect(suggestCategory('mamak nasi lemak', KEYWORD_RULES)).toBe('Food & Drink');
+    expect(suggestCategory('grab to campus', KEYWORD_RULES)).toBe('Transport');
+    expect(suggestCategory('unifi internet bill', KEYWORD_RULES)).toBe('Bills');
+    expect(suggestCategory('mydin groceries', KEYWORD_RULES)).toBe('Groceries');
+  });
+  test('returns null when nothing matches', () => {
+    expect(suggestCategory('xyz', KEYWORD_RULES)).toBeNull();
+    expect(suggestCategory('', KEYWORD_RULES)).toBeNull();
+  });
+});
+
+describe('CSV round-trip', () => {
+  test('serialises and parses transactions', () => {
+    const back = parseCSV(transactionsToCSV(TRANSACTIONS));
+    expect(back).toHaveLength(TRANSACTIONS.length);
+    expect(back[0].date).toBe(TRANSACTIONS[0].date);
+    expect(back[0].desc).toBe(TRANSACTIONS[0].desc);
+    expect(back[0].source).toBe(TRANSACTIONS[0].source);
+  });
+  test('handles quoted fields with commas', () => {
+    const list = [{ date: '2026-11-19', desc: 'Mamak, teh & roti', cat: 'Food & Drink', type: 'expense', amount: 12.5, source: 'Cash' }];
+    const back = parseCSV(transactionsToCSV(list));
+    expect(back[0].desc).toBe('Mamak, teh & roti');
+    expect(back[0].amount).toBe(12.5);
   });
 });

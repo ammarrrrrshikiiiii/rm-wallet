@@ -67,14 +67,15 @@ export function computeBudgets(transactions, budgets, month) {
 }
 
 // Search + filter transactions, newest first.
-export function filterTransactions(transactions, { q = '', type = '', cat = '' } = {}) {
+export function filterTransactions(transactions, { q = '', type = '', cat = '', source = '' } = {}) {
   const query = String(q).toLowerCase();
   return (Array.isArray(transactions) ? transactions : [])
     .filter((t) => {
       const matchesQuery = !query || String(t.desc).toLowerCase().includes(query);
       const matchesType = !type || t.type === type;
       const matchesCat = !cat || t.cat === cat;
-      return matchesQuery && matchesType && matchesCat;
+      const matchesSource = !source || t.source === source;
+      return matchesQuery && matchesType && matchesCat && matchesSource;
     })
     .sort((a, b) => String(b.date).localeCompare(String(a.date)));
 }
@@ -106,3 +107,112 @@ export function escapeHtml(value) {
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#39;');
 }
+
+// ===== v0.2: safe-to-spend, guardrails, suggestions, backup =====
+
+// 'YYYY-MM-DD' from a Date object (local time).
+export function toISODate(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+// Last calendar day of a 'YYYY-MM' month, as 'YYYY-MM-DD' (or null if malformed).
+export function lastDayOfMonth(ym) {
+  const m = /^(\d{4})-(\d{2})$/.exec(ym || '');
+  if (!m) return null;
+  const y = Number(m[1]);
+  const mo = Number(m[2]);
+  const day = new Date(y, mo, 0).getDate();
+  return `${y}-${String(mo).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+}
+
+// Whole days from today to a target date, clamped to 0 (both 'YYYY-MM-DD').
+export function daysUntil(todayISO, targetISO) {
+  const t = new Date(`${todayISO}T00:00:00`);
+  const g = new Date(`${targetISO}T00:00:00`);
+  if (Number.isNaN(t.getTime()) || Number.isNaN(g.getTime())) return 0;
+  return Math.max(0, Math.ceil((g - t) / 86400000));
+}
+
+// Daily amount below which the safe-to-spend indicator turns amber.
+export const DAILY_LOW = 15;
+
+// Remaining budget divided by days left, with a green/amber/red status.
+export function safeToSpend(remainingBudget, daysRemaining) {
+  const left = Number.isFinite(Number(remainingBudget)) ? Number(remainingBudget) : 0;
+  const days = Math.max(1, Math.floor(Number(daysRemaining) || 0));
+  const perDay = left / days;
+  let status = 'green';
+  if (left <= 0) status = 'red';
+  else if (perDay < DAILY_LOW) status = 'amber';
+  return { perDay, days, status };
+}
+
+// Budget guardrail tier: green <70%, amber 70-89%, red >=90%.
+export function budgetTier(pct) {
+  const p = Number(pct);
+  if (!Number.isFinite(p) || p < 70) return 'green';
+  if (p < 90) return 'amber';
+  return 'red';
+}
+
+// First matching category for a note, or null. `rules` is [[RegExp, category], ...].
+export function suggestCategory(note, rules) {
+  const n = String(note || '').toLowerCase();
+  for (const [pattern, cat] of rules || []) {
+    if (pattern.test(n)) return cat;
+  }
+  return null;
+}
+
+// Serialise transactions to CSV (header: date,description,category,type,amount,source).
+export function transactionsToCSV(list) {
+  const esc = (v) => {
+    const s = String(v ?? '');
+    return /[",\n]/.test(s) ? `"${s.replaceAll('"', '""')}"` : s;
+  };
+  const rows = (Array.isArray(list) ? list : []).map((t) =>
+    [t.date, t.desc, t.cat, t.type, t.amount, t.source || ''].map(esc).join(','));
+  return ['date,description,category,type,amount,source', ...rows].join('\n');
+}
+
+// Parse CSV (handles quoted fields and embedded commas/newlines) back into transactions.
+export function parseCSV(text) {
+  const rows = [];
+  let row = [];
+  let field = '';
+  let inQuotes = false;
+  const src = String(text || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  for (let i = 0; i < src.length; i++) {
+    const c = src[i];
+    if (inQuotes) {
+      if (c === '"') {
+        if (src[i + 1] === '"') { field += '"'; i++; } else inQuotes = false;
+      } else field += c;
+    } else if (c === '"') inQuotes = true;
+    else if (c === ',') { row.push(field); field = ''; }
+    else if (c === '\n') { row.push(field); field = ''; rows.push(row); row = []; }
+    else field += c;
+  }
+  if (field !== '' || row.length) { row.push(field); rows.push(row); }
+  if (rows.length < 2) return [];
+  const header = rows[0].map((h) => h.trim().toLowerCase());
+  const idx = (n) => header.indexOf(n);
+  const get = (cols, n) => { const i = idx(n); return i >= 0 ? (cols[i] || '').trim() : ''; };
+  return rows.slice(1)
+    .map((cols) => ({
+      date: get(cols, 'date'),
+      desc: get(cols, 'description'),
+      cat: get(cols, 'category'),
+      type: get(cols, 'type') || 'expense',
+      amount: Number(get(cols, 'amount')),
+      source: get(cols, 'source') || 'Cash',
+    }))
+    .filter((t) => t.date && t.desc && Number.isFinite(t.amount));
+}
+
+// Round-trip-safe JSON helpers (kept pure and injectable for tests).
+export function toJSON(value) { return JSON.stringify(value, null, 2); }
+export function parseJSON(text) { return JSON.parse(text); }
