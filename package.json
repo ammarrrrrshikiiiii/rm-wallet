@@ -1,6 +1,6 @@
 {
   "name": "rm-wallet",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "RM Wallet — a personal finance tracker for students: track income, spending and monthly budgets in Malaysian Ringgit.",
   "private": true,
   "type": "module",

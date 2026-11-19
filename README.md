@@ -47,6 +47,9 @@ You can also register a new account — it's stored in your browser's `localStor
 ## Features
 
 - **One-click demo** — "Try Demo Instantly" signs you in with sample data kept only in your browser.
+- **Per-account isolation** — every user's budget, transactions, goals and settings are stored separately; the demo account stays pre-populated with a one-tap reset.
+- **Starter presets** — sign up with the "Student Allowance Starter" (sample data ready to explore) or "Start Fresh (RM 0)".
+- **Data controls** — load sample data or clear all data for your account anytime.
 - **Safe-to-spend hero** — remaining monthly budget divided by days until your allowance date, colour-coded green/amber/red with a customisable reset date.
 - **Quick-add expense bar** — amount, note and payment source with one-tap category chips and keyword auto-suggestion.
 - **Multi-wallet** — tag every transaction by payment source (Cash, Bank/MAE, E-Wallet/TnG) and filter by it.
