@@ -9,7 +9,7 @@ describe('sample data integrity', () => {
       expect(typeof t.desc).toBe('string');
       expect(t.desc.length).toBeGreaterThan(0);
       expect(typeof t.cat).toBe('string');
-      expect(['income', 'expense']).toContain(t.type);
+      expect(t.type).toBe('expense');
       expect(Number.isFinite(t.amount)).toBe(true);
       expect(t.amount).toBeGreaterThan(0);
     }
@@ -36,7 +36,7 @@ describe('sample data integrity', () => {
   test('starter preset data is valid', () => {
     for (const t of STARTER_TRANSACTIONS) {
       expect(t.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
-      expect(['income', 'expense']).toContain(t.type);
+      expect(t.type).toBe('expense');
       expect(Number.isFinite(t.amount)).toBe(true);
       expect(PAYMENT_METHODS).toContain(t.source);
     }

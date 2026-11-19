@@ -8,7 +8,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="assets/icon-180.png">
 <title>Dashboard | RM Wallet</title>
-<meta name="description" content="Overview of income, spending, balance and savings rate with charts of monthly trends and spending by category.">
+<meta name="description" content="Track your monthly budget, spending and remaining allowance.">
 <meta name="author" content="RM Wallet">
 <meta name="keywords" content="personal finance, budget tracker, student expenses, Bootstrap 5, Chart.js">
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
@@ -45,6 +45,13 @@
             <label class="me-1" for="allowanceDate">Allowance date</label>
             <input type="date" id="allowanceDate">
           </div>
+          <div class="mt-2">
+            <button id="topUpToggle" class="btn btn-sm btn-outline-light" type="button"><i class="bi bi-plus-lg me-1"></i>Top up budget</button>
+            <div id="topUpForm" class="d-flex gap-2 justify-content-end mt-2" hidden>
+              <input id="topUpAmount" type="number" class="form-control form-control-sm" min="0" style="max-width:120px" placeholder="RM" aria-label="Top-up amount">
+              <button id="topUpApply" class="btn btn-sm btn-light" type="button">Add</button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -63,14 +70,13 @@
   </section>
 
   <section class="row g-3 mb-4" aria-label="Summary">
-    <div class="col-12 col-md-6 col-lg-3"><div class="panel stat-main h-100"><div class="stat-label" id="sBalLabel">Balance</div><div class="stat-value" id="sBal"></div></div></div>
-    <div class="col-6 col-lg-3"><div class="panel h-100"><div class="stat-label" id="sIncLabel">Income</div><div class="stat-value amt-in" id="sInc"></div></div></div>
-    <div class="col-6 col-lg-3"><div class="panel h-100"><div class="stat-label" id="sExpLabel">Spent</div><div class="stat-value amt-out" id="sExp"></div></div></div>
-    <div class="col-12 col-lg-3"><div class="panel h-100"><div class="stat-label" id="sRateLabel">Savings rate</div><div class="stat-value" id="sRate"></div></div></div>
+    <div class="col-12 col-md-4"><div class="panel stat-main h-100"><div class="stat-label" id="sBudgetLabel">Monthly Budget</div><div class="stat-value" id="sBudget"></div></div></div>
+    <div class="col-6 col-md-4"><div class="panel h-100"><div class="stat-label" id="sSpentLabel">Spent So Far</div><div class="stat-value amt-out" id="sSpent"></div></div></div>
+    <div class="col-6 col-md-4"><div class="panel h-100"><div class="stat-label" id="sRemainLabel">Remaining Budget</div><div class="stat-value amt-in" id="sRemain"></div></div></div>
   </section>
 
   <section class="row g-3 mb-4">
-    <div class="col-lg-7"><div class="panel"><h2 class="h5">Income vs expenses by month</h2><div class="chart-box"><canvas id="cMonth" role="img" aria-label="Bar chart of income versus expenses by month"></canvas></div></div></div>
+    <div class="col-lg-7"><div class="panel"><h2 class="h5">Spending by month</h2><div class="chart-box"><canvas id="cMonth" role="img" aria-label="Bar chart of spending by month"></canvas></div></div></div>
     <div class="col-lg-5"><div class="panel"><h2 class="h5">Where this month's money went</h2><div class="chart-box"><canvas id="cCat" role="img" aria-label="Doughnut chart of spending by category for the latest month"></canvas></div></div></div>
   </section>
 

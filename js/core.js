@@ -11,18 +11,11 @@ export function rm(value) {
   return `${neg ? '-' : ''}RM ${grouped}.${frac}`;
 }
 
-// Sum income / expense / balance for a list of transactions.
-export function totals(list) {
-  const safe = Array.isArray(list) ? list : [];
-  let income = 0;
-  let expense = 0;
-  for (const t of safe) {
-    const amount = Number(t.amount);
-    if (!Number.isFinite(amount)) continue;
-    if (t.type === 'income') income += amount;
-    else if (t.type === 'expense') expense += amount;
-  }
-  return { income, expense, balance: income - expense };
+// Sum of all expense amounts, optionally scoped to a 'YYYY-MM' month.
+export function totalExpenses(transactions, month) {
+  return (Array.isArray(transactions) ? transactions : [])
+    .filter((t) => t.type === 'expense' && (!month || String(t.date).startsWith(month)))
+    .reduce((sum, t) => sum + (Number.isFinite(Number(t.amount)) ? Number(t.amount) : 0), 0);
 }
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -85,14 +78,6 @@ export function latestTransactions(transactions, n) {
   return [...(Array.isArray(transactions) ? transactions : [])]
     .sort((a, b) => String(b.date).localeCompare(String(a.date)))
     .slice(0, n);
-}
-
-// Savings rate for a month as a whole percentage, or null when undefined (no income).
-export function savingsRate(income, expense) {
-  const i = Number(income);
-  const e = Number(expense);
-  if (!Number.isFinite(i) || i <= 0) return null;
-  return Math.round(((i - e) / i) * 100);
 }
 
 // Chart colour palette used by dashboard and budgets.

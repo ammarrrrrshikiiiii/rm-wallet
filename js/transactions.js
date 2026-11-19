@@ -1,8 +1,8 @@
-// ===== Expenses page (MAE-style monthly breakdown) =====
+// ===== Expenses page (MAE-style monthly breakdown, expenses-only) =====
 import { CATEGORIES, PAYMENT_METHODS, KEYWORD_RULES, CATEGORY_META } from './data.js';
 import { renderShell } from './app.js';
 import {
-  getTransactions, addTransaction, getBudgets, todayISO,
+  getTransactions, addTransaction, updateTransaction, removeTransaction, getBudgets, getSettings, todayISO,
   exportBackupJSON, importBackupJSON, exportTransactionsCSV, importTransactionsCSV,
 } from './store.js';
 import {
@@ -28,7 +28,6 @@ if (renderShell('transactions')) {
   const $ = (id) => document.getElementById(id);
   const meta = (cat) => CATEGORY_META[cat] || { icon: 'bi-tag', color: '#9aa7a3' };
 
-  // Populate selects.
   CATEGORIES.forEach((c) => {
     $('fCat').insertAdjacentHTML('beforeend', `<option>${escapeHtml(c)}</option>`);
     $('aeCat').insertAdjacentHTML('beforeend', `<option>${escapeHtml(c)}</option>`);
@@ -40,6 +39,7 @@ if (renderShell('transactions')) {
 
   let selectedMonth = deriveCurrentMonth(getTransactions());
   let activeTab = 'latest';
+  let editingId = null;
   let expenseCharts = [];
   const addModal = new bootstrap.Modal($('addExpenseModal'));
 
@@ -65,13 +65,14 @@ if (renderShell('transactions')) {
     const spent = byCat.reduce((s, c) => s + c.total, 0);
     $('spentTotal').textContent = rm(spent);
 
-    // Month-over-month pill (falls back to share of budget).
+    // Month-over-month pill (falls back to share of the monthly budget).
     const idx = months.indexOf(selectedMonth);
     const prev = idx > 0 ? months[idx - 1] : null;
     const pill = $('momPill');
     const mom = prev == null ? null : monthOverMonthChange(spent, spendingByCategory(getTransactions(), prev).reduce((s, c) => s + c.total, 0));
     if (mom === null) {
-      const totalBudget = getBudgets().reduce((s, b) => s + b.limit, 0);
+      const settings = getSettings();
+      const totalBudget = Number(settings.monthlyBudget) > 0 ? Number(settings.monthlyBudget) : getBudgets().reduce((s, b) => s + b.limit, 0);
       const share = totalBudget > 0 ? Math.round((spent / totalBudget) * 100) : 0;
       pill.textContent = `${share}% of budget`;
       pill.className = 'badge rounded-pill badge-source';
@@ -80,7 +81,7 @@ if (renderShell('transactions')) {
       pill.className = 'badge rounded-pill badge-expense';
     } else if (mom < 0) {
       pill.textContent = `\u25BC ${-mom}% vs ${monthName(prev)}`;
-      pill.className = 'badge rounded-pill badge-income';
+      pill.className = 'badge rounded-pill badge-source';
     } else {
       pill.textContent = `Same as ${monthName(prev)}`;
       pill.className = 'badge rounded-pill badge-source';
@@ -144,8 +145,12 @@ if (renderShell('transactions')) {
           <td><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${meta(t.cat).color};margin-right:.4rem"></span>${escapeHtml(t.cat)}</td>
           <td><span class="badge rounded-pill badge-source">${escapeHtml(t.source || '')}</span></td>
           <td class="text-end amt-out">-${rm(t.amount)}</td>
+          <td class="text-end text-nowrap">
+            <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-1" data-edit="${t.id}" aria-label="Edit ${escapeHtml(t.desc)}"><i class="bi bi-pencil"></i></button>
+            <button type="button" class="btn btn-sm btn-outline-danger py-0 px-1" data-del="${t.id}" aria-label="Delete ${escapeHtml(t.desc)}"><i class="bi bi-trash"></i></button>
+          </td>
         </tr>`).join('')
-      : '<tr><td colspan="5" class="text-center text-secondary py-4">No expenses this month. Try another month or clear the filters.</td></tr>';
+      : '<tr><td colspan="6" class="text-center text-secondary py-4">No expenses this month. Try another month or clear the filters.</td></tr>';
     $('count').textContent = `${list.length} expense${list.length === 1 ? '' : 's'} in ${monthName(selectedMonth)}`;
   }
 
@@ -217,14 +222,31 @@ if (renderShell('transactions')) {
     switchTab(activeTab);
   }
 
+  function openEdit(id) {
+    const t = getTransactions().find((x) => x.id === id);
+    if (!t) return;
+    editingId = id;
+    $('aeAmount').value = t.amount;
+    $('aeNote').value = t.desc;
+    $('aeCat').value = t.cat;
+    $('aeSource').value = t.source;
+    $('addExpenseTitle').textContent = 'Edit expense';
+    $('aeSave').textContent = 'Save changes';
+    $('aeHint').textContent = '';
+    addModal.show();
+  }
+
   // Sub-navigation.
   document.querySelectorAll('.subnav button').forEach((b) => b.addEventListener('click', () => switchTab(b.dataset.tab)));
 
   // Quick actions.
   $('addExpenseBtn').addEventListener('click', () => {
+    editingId = null;
     $('aeAmount').value = '';
     $('aeNote').value = '';
     $('aeCat').value = CATEGORIES[0];
+    $('addExpenseTitle').textContent = 'Add expense';
+    $('aeSave').textContent = 'Add expense';
     $('aeHint').textContent = '';
     addModal.show();
   });
@@ -234,7 +256,21 @@ if (renderShell('transactions')) {
     if (activeTab !== 'latest') switchTab('latest');
   });
 
-  // Add-expense modal: keyword auto-suggestion + save.
+  // Edit / delete via delegated events on the rows container.
+  $('rows').addEventListener('click', (e) => {
+    const del = e.target.closest('[data-del]');
+    const edit = e.target.closest('[data-edit]');
+    if (del) {
+      if (confirm('Delete this expense?')) {
+        removeTransaction(Number(del.dataset.del));
+        renderAll();
+      }
+    } else if (edit) {
+      openEdit(Number(edit.dataset.edit));
+    }
+  });
+
+  // Add-expense modal: keyword auto-suggestion + save (add or update).
   $('aeNote').addEventListener('input', () => {
     const suggested = suggestCategory($('aeNote').value, KEYWORD_RULES);
     if (suggested) {
@@ -250,7 +286,13 @@ if (renderShell('transactions')) {
     const desc = $('aeNote').value.trim();
     if (!Number.isFinite(amount) || amount <= 0) { $('aeHint').textContent = 'Enter an amount greater than zero.'; return; }
     if (!desc) { $('aeHint').textContent = 'Add a short note so the entry is easy to find.'; return; }
-    addTransaction({ date: todayISO(), desc, cat: $('aeCat').value, type: 'expense', amount, source: $('aeSource').value });
+
+    if (editingId != null) {
+      updateTransaction(editingId, { desc, cat: $('aeCat').value, amount, source: $('aeSource').value });
+    } else {
+      addTransaction({ date: todayISO(), desc, cat: $('aeCat').value, type: 'expense', amount, source: $('aeSource').value });
+    }
+    editingId = null;
     addModal.hide();
     if ($('fCat').value) { $('fCat').value = ''; }
     renderAll();

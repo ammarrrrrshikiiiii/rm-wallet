@@ -43,7 +43,7 @@ describe('per-user data isolation', () => {
 
     sessionStorage.setItem('rmUser', 'bob');
     store.createProfile('bob', 'starter');
-    expect(store.getTransactions()).toHaveLength(5);
+    expect(store.getTransactions()).toHaveLength(4);
     expect(store.getTransactions().some((t) => t.desc === 'alice expense')).toBe(false);
 
     sessionStorage.setItem('rmUser', 'alice');
@@ -70,5 +70,21 @@ describe('per-user data isolation', () => {
     store.resetDemo();
     expect(store.getTransactions().length).toBeGreaterThan(0);
     expect(store.getBudgets().length).toBeGreaterThan(0);
+  });
+
+  test('demo and starter presets carry a monthly budget', () => {
+    sessionStorage.setItem('rmUser', 'demo');
+    store.resetDemo();
+    expect(store.getSettings().monthlyBudget).toBe(1200);
+
+    sessionStorage.setItem('rmUser', 'starter');
+    store.createProfile('starter', 'starter');
+    expect(store.getSettings().monthlyBudget).toBe(800);
+  });
+
+  test('topUpBudget adds to the monthly budget', () => {
+    sessionStorage.setItem('rmUser', 'starter');
+    store.createProfile('starter', 'starter');
+    expect(store.topUpBudget(200)).toBe(1000);
   });
 });
