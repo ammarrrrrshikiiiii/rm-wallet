@@ -74,3 +74,30 @@ export const CATEGORY_META = {
   'Entertainment': { icon: 'bi-controller', color: '#e0604a' },
   'Other': { icon: 'bi-three-dots', color: '#9aa7a3' },
 };
+
+// Demo-account aliases (the realistic sample set).
+export const DEMO_TRANSACTIONS = TRANSACTIONS;
+export const DEMO_BUDGETS = BUDGETS;
+
+// "Student Allowance Starter" preset: a lightweight budget + a few transactions so
+// charts and metrics are visible immediately.
+export const STARTER_BUDGETS = [
+  { cat: 'Food & Drink', limit: 300 },
+  { cat: 'Transport', limit: 100 },
+  { cat: 'Groceries', limit: 150 },
+  { cat: 'Bills', limit: 80 },
+  { cat: 'Entertainment', limit: 80 },
+  { cat: 'Other', limit: 100 },
+];
+
+export const STARTER_TRANSACTIONS = [
+  { id: 1, date: '2026-11-01', desc: 'Monthly allowance', cat: 'Allowance', type: 'income', amount: 800, source: 'Bank/MAE' },
+  { id: 2, date: '2026-11-02', desc: 'Mamak dinner', cat: 'Food & Drink', type: 'expense', amount: 24, source: 'Cash' },
+  { id: 3, date: '2026-11-03', desc: 'Grab to campus', cat: 'Transport', type: 'expense', amount: 12, source: 'E-Wallet/TnG' },
+  { id: 4, date: '2026-11-05', desc: 'Groceries (Mydin)', cat: 'Groceries', type: 'expense', amount: 46, source: 'Cash' },
+  { id: 5, date: '2026-11-08', desc: 'Netflix subscription', cat: 'Entertainment', type: 'expense', amount: 18, source: 'E-Wallet/TnG' },
+];
+
+export const STARTER_GOALS = [
+  { id: 1, name: 'Emergency fund', target: 500, saved: 100 },
+];

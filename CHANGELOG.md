@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-11-19
+
+### Added
+
+- Per-user data isolation: budget, transactions, goals and settings are keyed by username.
+- "Student Allowance Starter" and "Start Fresh (RM 0)" sign-up presets.
+- "Reset Demo Data", "Load Sample Data" and "Clear All Data" actions.
+- Editable per-account budgets with an empty state.
+
+### Changed
+
+- One-time migration folds the previous shared/global data into the demo account.
+
 ## [0.3.0] - 2026-11-19
 
 ### Added

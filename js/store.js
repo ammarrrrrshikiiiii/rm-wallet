@@ -1,8 +1,22 @@
-// ===== Persistence layer: merges sample data with the user's localStorage data =====
-import { TRANSACTIONS as SAMPLE, BUDGETS as DEFAULT_BUDGETS } from './data.js';
+// ===== Per-user persistence layer =====
+// Every user's transactions, budgets, goals and settings live in their own
+// localStorage profile keyed by username. The demo account is seeded with the
+// realistic sample data; new accounts start from a chosen preset.
+import {
+  DEMO_TRANSACTIONS, DEMO_BUDGETS, STARTER_TRANSACTIONS, STARTER_BUDGETS, STARTER_GOALS,
+} from './data.js';
 import { toISODate, transactionsToCSV, parseCSV, toJSON, parseJSON } from './core.js';
 
-const K = { txns: 'rm.txns', goals: 'rm.goals', settings: 'rm.settings' };
+const LEGACY_KEYS = ['rm.txns', 'rm.goals', 'rm.settings'];
+
+// Currently signed-in username (from the session), or null on the login page.
+export function currentUser() {
+  return sessionStorage.getItem('rmUser') || null;
+}
+
+function profileKey(user) {
+  return 'rm.profile.' + (user || 'demo');
+}
 
 export function readJSON(key, fallback) {
   try {
@@ -21,77 +35,163 @@ export function todayISO() {
   return toISODate(new Date());
 }
 
-// All transactions: user-added first, then the demo sample data.
-export function getTransactions() {
-  return [...readJSON(K.txns, []), ...SAMPLE];
+export function emptyProfile() {
+  return { transactions: [], budgets: [], goals: [], settings: { allowanceDate: null, monthlyBudget: 0 } };
 }
+
+export function demoProfile() {
+  return {
+    transactions: DEMO_TRANSACTIONS.map((t) => ({ ...t })),
+    budgets: DEMO_BUDGETS.map((b) => ({ ...b })),
+    goals: [],
+    settings: { allowanceDate: null, monthlyBudget: 0 },
+  };
+}
+
+export function starterProfile() {
+  return {
+    transactions: STARTER_TRANSACTIONS.map((t) => ({ ...t })),
+    budgets: STARTER_BUDGETS.map((b) => ({ ...b })),
+    goals: STARTER_GOALS.map((g) => ({ ...g })),
+    settings: { allowanceDate: null, monthlyBudget: 0 },
+  };
+}
+
+function normalizeProfile(p) {
+  const base = emptyProfile();
+  return {
+    transactions: Array.isArray(p && p.transactions) ? p.transactions : base.transactions,
+    budgets: Array.isArray(p && p.budgets) ? p.budgets : base.budgets,
+    goals: Array.isArray(p && p.goals) ? p.goals : base.goals,
+    settings: { ...base.settings, ...((p && p.settings) || {}) },
+  };
+}
+
+export function getProfile(user = currentUser()) {
+  const p = readJSON(profileKey(user), null);
+  return p ? normalizeProfile(p) : null;
+}
+
+export function writeProfile(user, profile) {
+  writeJSON(profileKey(user), normalizeProfile(profile));
+}
+
+export function ensureProfile(user = currentUser()) {
+  const u = user || 'demo';
+  let p = getProfile(u);
+  if (!p) {
+    p = emptyProfile();
+    writeProfile(u, p);
+  }
+  return p;
+}
+
+// One-time migration: fold the old shared/global keys into the demo account, then
+// remove them. New accounts are unaffected and start isolated.
+function migrate() {
+  const hasLegacy = LEGACY_KEYS.some((k) => localStorage.getItem(k) != null);
+  if (hasLegacy) {
+    const dp = demoProfile();
+    const txns = readJSON('rm.txns', []);
+    if (txns.length) dp.transactions = [...dp.transactions, ...txns];
+    const goals = readJSON('rm.goals', []);
+    if (goals.length) dp.goals = goals;
+    dp.settings = { ...dp.settings, ...readJSON('rm.settings', {}) };
+    writeProfile('demo', dp);
+    LEGACY_KEYS.forEach((k) => localStorage.removeItem(k));
+  }
+  if (!getProfile('demo')) writeProfile('demo', demoProfile());
+}
+migrate();
+
+// Create a new user profile from a preset ('starter' or 'fresh').
+export function createProfile(username, preset) {
+  const p = preset === 'starter' ? starterProfile() : emptyProfile();
+  writeProfile(username, p);
+  return p;
+}
+
+// --- Scoped data access (current user) ---
+export function getTransactions() { return ensureProfile().transactions; }
+export function getBudgets() { return ensureProfile().budgets; }
+export function getGoals() { return ensureProfile().goals; }
+export function getSettings() { return ensureProfile().settings; }
 
 export function addTransaction({ date, desc, cat, type = 'expense', amount, source = 'Cash' }) {
-  const txns = readJSON(K.txns, []);
-  const txn = { id: Date.now(), date: date || todayISO(), desc, cat, type, amount: Number(amount), source };
-  txns.push(txn);
-  writeJSON(K.txns, txns);
-  return txn;
+  const p = ensureProfile();
+  p.transactions.push({ id: Date.now(), date: date || todayISO(), desc, cat, type, amount: Number(amount), source });
+  writeProfile(currentUser(), p);
+  return p.transactions[p.transactions.length - 1];
 }
 
-export function getBudgets() {
-  return DEFAULT_BUDGETS;
+export function saveSettings(patch) {
+  const p = ensureProfile();
+  p.settings = { ...p.settings, ...patch };
+  writeProfile(currentUser(), p);
+  return p.settings;
 }
 
-// --- Savings goals ("Tabung") ---
-export function getGoals() {
-  return readJSON(K.goals, []);
+export function setBudgets(budgets) {
+  const p = ensureProfile();
+  p.budgets = (budgets || [])
+    .filter((b) => b && Number(b.limit) > 0)
+    .map((b) => ({ cat: b.cat, limit: Number(b.limit) }));
+  writeProfile(currentUser(), p);
+  return p.budgets;
 }
 
 export function addGoal({ name, target }) {
-  const goals = getGoals();
+  const p = ensureProfile();
   const goal = { id: Date.now(), name, target: Number(target) || 0, saved: 0 };
-  goals.push(goal);
-  writeJSON(K.goals, goals);
+  p.goals.push(goal);
+  writeProfile(currentUser(), p);
   return goal;
 }
 
 export function updateGoal(id, patch) {
-  const goals = getGoals().map((g) => (g.id === id ? { ...g, ...patch } : g));
-  writeJSON(K.goals, goals);
-  return goals;
+  const p = ensureProfile();
+  p.goals = p.goals.map((g) => (g.id === id ? { ...g, ...patch } : g));
+  writeProfile(currentUser(), p);
+  return p.goals;
 }
 
 export function removeGoal(id) {
-  const goals = getGoals().filter((g) => g.id !== id);
-  writeJSON(K.goals, goals);
-  return goals;
+  const p = ensureProfile();
+  p.goals = p.goals.filter((g) => g.id !== id);
+  writeProfile(currentUser(), p);
+  return p.goals;
 }
 
-// --- Settings (allowance/reset date) ---
-export function getSettings() {
-  return readJSON(K.settings, { allowanceDate: null });
+// --- Whole-data actions ---
+export function isDemo() {
+  return currentUser() === 'demo';
 }
 
-export function saveSettings(patch) {
-  const merged = { ...getSettings(), ...patch };
-  writeJSON(K.settings, merged);
-  return merged;
+export function loadSampleData() {
+  const p = ensureProfile();
+  p.transactions = DEMO_TRANSACTIONS.map((t) => ({ ...t }));
+  p.budgets = DEMO_BUDGETS.map((b) => ({ ...b }));
+  writeProfile(currentUser(), p);
 }
 
-// --- Backup / restore ---
+export function clearAllData() {
+  writeProfile(currentUser(), emptyProfile());
+}
+
+export function resetDemo() {
+  writeProfile('demo', demoProfile());
+}
+
+// --- Backup / restore (current user) ---
 export function exportBackupJSON() {
-  return toJSON({
-    app: 'rm-wallet',
-    version: 2,
-    exportedAt: new Date().toISOString(),
-    transactions: readJSON(K.txns, []),
-    goals: getGoals(),
-    settings: getSettings(),
-  });
+  return toJSON({ app: 'rm-wallet', version: 3, user: currentUser(), profile: getProfile() });
 }
 
 export function importBackupJSON(text) {
   const data = parseJSON(text);
-  if (!data || typeof data !== 'object') throw new Error('Not a valid RM Wallet backup.');
-  if (Array.isArray(data.transactions)) writeJSON(K.txns, data.transactions);
-  if (Array.isArray(data.goals)) writeJSON(K.goals, data.goals);
-  if (data.settings && typeof data.settings === 'object') writeJSON(K.settings, data.settings);
+  const profile = data && data.profile && typeof data.profile === 'object' ? data.profile : data;
+  if (!profile || typeof profile !== 'object') throw new Error('Not a valid RM Wallet backup.');
+  writeProfile(currentUser(), profile);
 }
 
 export function exportTransactionsCSV() {
@@ -99,6 +199,7 @@ export function exportTransactionsCSV() {
 }
 
 export function importTransactionsCSV(text) {
-  const rows = parseCSV(text);
-  writeJSON(K.txns, rows);
+  const p = ensureProfile();
+  p.transactions = parseCSV(text);
+  writeProfile(currentUser(), p);
 }

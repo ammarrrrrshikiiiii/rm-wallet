@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { TRANSACTIONS, BUDGETS, CATEGORIES, PAYMENT_METHODS } from '../js/data.js';
+import { TRANSACTIONS, BUDGETS, CATEGORIES, PAYMENT_METHODS, STARTER_TRANSACTIONS, STARTER_BUDGETS, STARTER_GOALS } from '../js/data.js';
 
 describe('sample data integrity', () => {
   test('every transaction has the required fields with valid types', () => {
@@ -31,5 +31,20 @@ describe('sample data integrity', () => {
       expect(Number.isFinite(b.limit)).toBe(true);
       expect(b.limit).toBeGreaterThan(0);
     }
+  });
+
+  test('starter preset data is valid', () => {
+    for (const t of STARTER_TRANSACTIONS) {
+      expect(t.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+      expect(['income', 'expense']).toContain(t.type);
+      expect(Number.isFinite(t.amount)).toBe(true);
+      expect(PAYMENT_METHODS).toContain(t.source);
+    }
+    const cats = new Set(CATEGORIES);
+    for (const b of STARTER_BUDGETS) {
+      expect(cats.has(b.cat)).toBe(true);
+      expect(b.limit).toBeGreaterThan(0);
+    }
+    expect(STARTER_GOALS.length).toBeGreaterThan(0);
   });
 });
