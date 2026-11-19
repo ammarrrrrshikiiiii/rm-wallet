@@ -34,9 +34,9 @@ $('sw').addEventListener('click', (e) => {
 });
 
 $('fillDemo').addEventListener('click', () => {
-  $('u').value = DEMO_USER;
-  $('p').value = DEMO_PASSWORD;
-  showMsg('Demo credentials filled in. Press "Sign in".', true);
+  // One-click demo: sign in immediately (sample data only, no server).
+  sessionStorage.setItem('rmUser', DEMO_USER);
+  location.href = 'dashboard.html';
 });
 
 $('go').addEventListener('click', () => {

@@ -32,3 +32,37 @@ footer a{color:#fff}
 .login-hero .big{font-family:'Bricolage Grotesque',sans-serif;font-size:clamp(2.4rem,5vw,4rem);line-height:1.05;font-weight:700}
 .login-form{display:flex;align-items:center;justify-content:center;padding:2rem}
 @media(max-width:768px){.login-wrap{grid-template-columns:1fr}.login-hero{padding:2rem}}
+
+/* ===== Safe-to-Spend hero ===== */
+.hero-safe{border-radius:1rem;padding:1.25rem 1.5rem;color:#fff;border:0;position:relative;overflow:hidden}
+.hero-safe.green{background:#1f7a6d}
+.hero-safe.amber{background:#9a6b1f}
+.hero-safe.red{background:#b03a2e}
+.hero-safe .hero-top{display:flex;justify-content:space-between;align-items:flex-start;gap:1rem}
+.hero-safe .hero-value{font-family:'Bricolage Grotesque',sans-serif;font-size:clamp(2rem,5vw,2.9rem);font-weight:700;line-height:1}
+.hero-safe .hero-label{opacity:.92;font-size:.9rem}
+.hero-safe .hero-sub{font-size:.85rem;opacity:.85}
+.hero-safe .badge-status{background:rgba(255,255,255,.18);color:#fff;border-radius:999px;padding:.3rem .8rem;font-size:.8rem;font-weight:600}
+
+/* ===== Quick-add bar ===== */
+.chips{display:flex;flex-wrap:wrap;gap:.4rem}
+.chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:.28rem .78rem;font-size:.85rem;cursor:pointer;transition:border-color .15s,background .15s,color .15s;color:var(--ink)}
+.chip:hover{border-color:var(--teal)}
+.chip.active{background:var(--teal);color:#fff;border-color:var(--teal)}
+.chip.active .bi{color:#fff}
+
+/* ===== Source badges ===== */
+.badge-source{background:#eef3f0;color:#3c5a54;border:1px solid var(--line);font-weight:500}
+
+/* ===== Tabung (savings jars) ===== */
+.jar{border:2px solid var(--line);border-radius:.75rem .75rem 1rem 1rem;padding:1rem 1rem .9rem;position:relative;overflow:hidden;background:#fff;min-height:150px;display:flex;flex-direction:column;justify-content:flex-end}
+.jar .jar-fill{position:absolute;left:0;right:0;bottom:0;height:0;background:linear-gradient(180deg,#d9efe8,var(--teal));transition:height .5s ease}
+.jar .jar-body{position:relative;z-index:1}
+.jar .jar-name{font-weight:600}
+.jar .jar-meta{font-size:.85rem;color:#5b7370}
+.jar .jar-pct{font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:1.1rem}
+.jar .jar-actions{position:relative;z-index:1;margin-top:.4rem}
+
+/* ===== Allowance date control ===== */
+.allowance-control{font-size:.85rem}
+.allowance-control input[type=date]{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:.5rem;padding:.2rem .5rem}
