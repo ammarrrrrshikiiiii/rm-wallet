@@ -1,11 +1,10 @@
-<!-- Replace `OWNER` below with your GitHub username/org after the first push. -->
 # RM Wallet
 
 **Know where your allowance goes — one ringgit at a time.** RM Wallet is a fast, dependency-free personal finance tracker for students: track income, spending and monthly budgets in Malaysian Ringgit, with charts that make your money obvious in seconds.
 
-[![CI](https://github.com/OWNER/rm-wallet/actions/workflows/ci.yml/badge.svg)](https://github.com/OWNER/rm-wallet/actions/workflows/ci.yml)
+[![CI](https://github.com/ammarrrrrshikiiiii/rm-wallet/actions/workflows/ci.yml/badge.svg)](https://github.com/ammarrrrrshikiiiii/rm-wallet/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-1f7a6d.svg)](LICENSE)
-[![Version](https://img.shields.io/github/v/release/OWNER/rm-wallet?label=version&color=1f7a6d)](https://github.com/OWNER/rm-wallet/releases)
+[![Version](https://img.shields.io/github/v/release/ammarrrrrshikiiiii/rm-wallet?label=version&color=1f7a6d)](https://github.com/ammarrrrrshikiiiii/rm-wallet/releases)
 
 ![RM Wallet dashboard](docs/screenshot-dashboard.png)
 
@@ -147,7 +146,7 @@ Data flows one way: static sample data (`js/data.js`) → pure functions (`js/co
 
 1. Push this repository to GitHub.
 2. Go to **Settings → Pages**, set *Source* to **Deploy from a branch**, choose `main` and `/ (root)`, then save.
-3. Your site is live at `https://OWNER.github.io/rm-wallet/`.
+3. Your site is live at `https://ammarrrrrshikiiiii.github.io/rm-wallet/`.
 
 ## Roadmap
 
