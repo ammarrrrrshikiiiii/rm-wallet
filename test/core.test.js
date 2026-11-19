@@ -2,8 +2,8 @@ import { describe, expect, test } from 'bun:test';
 import {
   rm, totalExpenses, monthName, deriveCurrentMonth, monthsIn, spentInMonth,
   computeBudgets, filterTransactions, latestTransactions, escapeHtml,
-  safeToSpend, budgetTier, daysUntil, lastDayOfMonth, firstDayOfMonth, suggestCategory, toISODate,
-  inclusiveDaysBetween, remainingDaysInPeriod, dailyAllowance, expensesBetween,
+  safeToSpend, safeToSpendToday, budgetTier, daysUntil, lastDayOfMonth, firstDayOfMonth, suggestCategory, toISODate,
+  inclusiveDaysBetween, remainingDaysInPeriod, dailyAllowance, expensesBetween, expensesOnDate, expensesBeforeDate,
   transactionsToCSV, parseCSV, DAILY_LOW,
   spendingByCategory, spendingByMerchant, monthOverMonthChange,
 } from '../js/core.js';
@@ -223,6 +223,53 @@ describe('budget period helpers', () => {
       { date: '2026-12-01', type: 'expense', amount: 200 },
     ];
     expect(expensesBetween(list, '2026-11-01', '2026-11-30')).toBe(150);
+  });
+  test('expensesOnDate sums only that date', () => {
+    const list = [
+      { date: '2026-11-10', type: 'expense', amount: 100 },
+      { date: '2026-11-19', type: 'expense', amount: 50 },
+      { date: '2026-11-19', type: 'expense', amount: 30 },
+      { date: '2026-12-01', type: 'expense', amount: 200 },
+    ];
+    expect(expensesOnDate(list, '2026-11-19')).toBe(80);
+  });
+  test('expensesBeforeDate excludes the target date itself', () => {
+    const list = [
+      { date: '2026-11-10', type: 'expense', amount: 100 },
+      { date: '2026-11-19', type: 'expense', amount: 50 },
+      { date: '2026-11-19', type: 'expense', amount: 30 },
+      { date: '2026-12-01', type: 'expense', amount: 200 },
+    ];
+    expect(expensesBeforeDate(list, '2026-11-01', '2026-11-30', '2026-11-19')).toBe(100);
+  });
+});
+
+describe('safeToSpendToday', () => {
+  test('full allowance with zero spent today', () => {
+    const m = safeToSpendToday(1000, 0, 0, 30);
+    expect(m.todayAllowance).toBeCloseTo(33.33, 2);
+    expect(m.todayLeft).toBeCloseTo(33.33, 2);
+    expect(m.status).toBe('green');
+  });
+  test('partial spend today deducts from today\'s allowance', () => {
+    const m = safeToSpendToday(1000, 0, 10, 30);
+    expect(m.todayLeft).toBeCloseTo(23.33, 2);
+    expect(m.status).toBe('green');
+  });
+  test('spending more than today\'s allowance goes negative (red)', () => {
+    const m = safeToSpendToday(1000, 0, 40, 30);
+    expect(m.todayLeft).toBeCloseTo(-6.67, 2);
+    expect(m.status).toBe('red');
+  });
+  test('prior-day spending shrinks today\'s allowance from the remaining budget', () => {
+    const m = safeToSpendToday(1000, 100, 10, 20);
+    expect(m.todayAllowance).toBeCloseTo(45, 2);
+    expect(m.todayLeft).toBeCloseTo(35, 2);
+    expect(m.status).toBe('green');
+  });
+  test('clamps zero remaining days and flags a low remainder', () => {
+    expect(safeToSpendToday(100, 0, 0, 0).todayLeft).toBe(100);
+    expect(safeToSpendToday(100, 0, 0, 10).status).toBe('amber');
   });
 });
 

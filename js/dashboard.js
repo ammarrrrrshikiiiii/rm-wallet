@@ -7,12 +7,12 @@ import {
 } from './store.js';
 import {
   rm, monthName, deriveCurrentMonth, monthsIn, latestTransactions, escapeHtml, PALETTE,
-  safeToSpend, firstDayOfMonth, lastDayOfMonth, inclusiveDaysBetween, remainingDaysInPeriod,
-  dailyAllowance, expensesBetween, suggestCategory, totalExpenses,
+  safeToSpendToday, firstDayOfMonth, lastDayOfMonth, inclusiveDaysBetween, remainingDaysInPeriod,
+  dailyAllowance, expensesBetween, expensesOnDate, expensesBeforeDate, suggestCategory, totalExpenses,
 } from './core.js';
 
 const $ = (id) => document.getElementById(id);
-const STATUS_LABEL = { green: 'On track', amber: 'Low &mdash; be careful', red: 'Over budget' };
+const STATUS_LABEL = { green: 'On track', amber: 'Low &mdash; be careful', red: 'Over today\u2019s limit' };
 const shortDate = (iso) => (iso ? `${Number(iso.slice(8, 10))} ${monthName(iso.slice(0, 7))}` : '');
 let charts = [];
 let selectedCat = CATEGORIES[0];
@@ -69,13 +69,16 @@ function renderCharts(txns, month, cur) {
   }));
 }
 
-function renderDailyAllowance(budgetTotal, spent, period) {
+function renderDailyAllowance(txns, budgetTotal, spent, period) {
   const { start, end } = period;
   const periodDays = inclusiveDaysBetween(start, end);
-  const remaining = budgetTotal - spent;
+  const today = todayISO();
+  const spentToday = expensesOnDate(txns, today);
+  const spentBeforeToday = expensesBeforeDate(txns, start, end, today);
+  const remDays = remainingDaysInPeriod(today, start, end);
+  const m = safeToSpendToday(budgetTotal, spentBeforeToday, spentToday, remDays);
   const baselineDaily = dailyAllowance(budgetTotal, periodDays);
-  const remDays = remainingDaysInPeriod(todayISO(), start, end);
-  const sts = safeToSpend(remaining, remDays);
+  const remaining = budgetTotal - spent;
 
   const card = $('safeCard');
   if (budgetTotal <= 0) {
@@ -87,11 +90,11 @@ function renderDailyAllowance(budgetTotal, spent, period) {
     return;
   }
 
-  card.className = 'hero-safe ' + sts.status;
-  $('safeValue').textContent = `${rm(baselineDaily)}/day`;
-  $('safeBadge').innerHTML = STATUS_LABEL[sts.status];
-  $('safeSub').textContent = `${rm(remaining)} remaining \u00b7 ${periodDays}-day period (${shortDate(start)} \u2013 ${shortDate(end)})`;
-  $('dailyNow').textContent = `Safe to spend now: ${rm(sts.perDay)}/day`;
+  card.className = 'hero-safe ' + m.status;
+  $('safeValue').textContent = rm(m.todayLeft);
+  $('safeBadge').innerHTML = STATUS_LABEL[m.status];
+  $('safeSub').textContent = `${rm(spentToday)} spent today \u00b7 limit ${rm(m.todayAllowance)}`;
+  $('dailyNow').textContent = `${rm(baselineDaily)}/day \u00b7 ${rm(remaining)} remaining \u00b7 ${periodDays}-day period`;
 }
 
 function renderChips() {
@@ -181,7 +184,7 @@ function renderAll() {
     ? recent.map((t) => `<tr><td>${escapeHtml(t.date)}</td><td>${escapeHtml(t.desc)}</td><td>${escapeHtml(t.cat)}</td><td><span class="badge rounded-pill badge-source">${escapeHtml(t.source || '')}</span></td><td class="text-end amt-out">-${rm(t.amount)}</td></tr>`).join('')
     : '<tr><td colspan="5" class="text-center text-secondary py-4">No expenses yet. Add one below or load sample data.</td></tr>';
 
-  renderDailyAllowance(budgetTotal, spent, period);
+  renderDailyAllowance(txns, budgetTotal, spent, period);
   renderGoals();
   destroyCharts();
   renderCharts(txns, month, cur);
