@@ -87,4 +87,16 @@ describe('per-user data isolation', () => {
     store.createProfile('starter', 'starter');
     expect(store.topUpBudget(200)).toBe(1000);
   });
+
+  test('resetBudget clears amount and period', () => {
+    sessionStorage.setItem('rmUser', 'starter');
+    store.createProfile('starter', 'starter');
+    store.saveSettings({ monthlyBudget: 999, budgetStart: '2026-11-25', budgetEnd: '2026-12-24' });
+    store.resetBudget();
+    const s = store.getSettings();
+    expect(s.monthlyBudget).toBe(0);
+    expect(s.budgetStart).toBeNull();
+    expect(s.budgetEnd).toBeNull();
+    expect(s.allowanceDate).toBeNull();
+  });
 });

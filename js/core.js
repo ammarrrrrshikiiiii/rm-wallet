@@ -121,6 +121,47 @@ export function daysUntil(todayISO, targetISO) {
   return Math.max(0, Math.ceil((g - t) / 86400000));
 }
 
+// First calendar day of a 'YYYY-MM' month, as 'YYYY-MM-DD' (or null if malformed).
+export function firstDayOfMonth(ym) {
+  const m = /^(\d{4})-(\d{2})$/.exec(ym || '');
+  if (!m) return null;
+  return `${m[1]}-${m[2]}-01`;
+}
+
+// Number of days between two dates, inclusive of both endpoints (0 when invalid or reversed).
+export function inclusiveDaysBetween(startISO, endISO) {
+  const s = new Date(`${startISO}T00:00:00`);
+  const e = new Date(`${endISO}T00:00:00`);
+  if (Number.isNaN(s.getTime()) || Number.isNaN(e.getTime()) || e < s) return 0;
+  return Math.floor((e - s) / 86400000) + 1;
+}
+
+// Days remaining in a period, counted inclusively from the later of today or the
+// period start through the period end (clamped to >= 1 to avoid division by zero).
+export function remainingDaysInPeriod(todayISO, startISO, endISO) {
+  const t = new Date(`${todayISO}T00:00:00`);
+  const s = new Date(`${startISO}T00:00:00`);
+  const e = new Date(`${endISO}T00:00:00`);
+  if (Number.isNaN(t.getTime()) || Number.isNaN(e.getTime())) return 1;
+  const from = t > s ? t : s;
+  if (e < from) return 1;
+  return Math.floor((e - from) / 86400000) + 1;
+}
+
+// Baseline daily allowance = budget divided by total period days.
+export function dailyAllowance(budget, totalDays) {
+  const b = Number.isFinite(Number(budget)) ? Number(budget) : 0;
+  const d = Math.max(1, Math.floor(Number(totalDays) || 0));
+  return b / d;
+}
+
+// Sum of expenses whose date falls within [startISO, endISO] (inclusive).
+export function expensesBetween(transactions, startISO, endISO) {
+  return (Array.isArray(transactions) ? transactions : [])
+    .filter((t) => t.type === 'expense' && String(t.date) >= startISO && String(t.date) <= endISO)
+    .reduce((sum, t) => sum + (Number.isFinite(Number(t.amount)) ? Number(t.amount) : 0), 0);
+}
+
 // Daily amount below which the safe-to-spend indicator turns amber.
 export const DAILY_LOW = 15;
 

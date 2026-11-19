@@ -146,6 +146,13 @@ export function topUpBudget(amount) {
   return p.settings.monthlyBudget;
 }
 
+export function resetBudget() {
+  const p = ensureProfile();
+  p.settings = { ...p.settings, monthlyBudget: 0, budgetStart: null, budgetEnd: null, allowanceDate: null };
+  writeProfile(currentUser(), p);
+  return p.settings;
+}
+
 export function saveSettings(patch) {
   const p = ensureProfile();
   p.settings = { ...p.settings, ...patch };
