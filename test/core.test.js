@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import {
-  rm, totals, monthName, deriveCurrentMonth, monthsIn, spentInMonth,
-  computeBudgets, filterTransactions, latestTransactions, savingsRate, escapeHtml,
+  rm, totalExpenses, monthName, deriveCurrentMonth, monthsIn, spentInMonth,
+  computeBudgets, filterTransactions, latestTransactions, escapeHtml,
   safeToSpend, budgetTier, daysUntil, lastDayOfMonth, suggestCategory, toISODate,
   transactionsToCSV, parseCSV, DAILY_LOW,
   spendingByCategory, spendingByMerchant, monthOverMonthChange,
@@ -24,21 +24,24 @@ describe('rm currency formatter', () => {
   });
 });
 
-describe('totals', () => {
-  test('returns zeros for empty input', () => {
-    expect(totals([])).toEqual({ income: 0, expense: 0, balance: 0 });
+describe('totalExpenses', () => {
+  test('returns zero for empty input', () => {
+    expect(totalExpenses([])).toBe(0);
   });
-  test('sums income and expense and computes balance', () => {
+  test('sums expenses only', () => {
     const list = [
-      { type: 'income', amount: 1000 },
-      { type: 'income', amount: 400 },
       { type: 'expense', amount: 250 },
       { type: 'expense', amount: 50 },
+      { type: 'expense', amount: 'oops' },
     ];
-    expect(totals(list)).toEqual({ income: 1400, expense: 300, balance: 1100 });
+    expect(totalExpenses(list)).toBe(300);
   });
-  test('ignores non-finite amounts', () => {
-    expect(totals([{ type: 'income', amount: 'oops' }, { type: 'income', amount: 10 }])).toEqual({ income: 10, expense: 0, balance: 10 });
+  test('scopes to a month', () => {
+    const list = [
+      { date: '2026-11-01', type: 'expense', amount: 100 },
+      { date: '2026-10-01', type: 'expense', amount: 200 },
+    ];
+    expect(totalExpenses(list, '2026-11')).toBe(100);
   });
 });
 
@@ -78,12 +81,12 @@ describe('budget computations', () => {
 
 describe('filtering and sorting', () => {
   test('search matches descriptions case-insensitively', () => {
-    expect(filterTransactions(TRANSACTIONS, { q: 'grab' })).toHaveLength(2);
+    expect(filterTransactions(TRANSACTIONS, { q: 'grab' })).toHaveLength(3);
     expect(filterTransactions(TRANSACTIONS, { q: 'GROCERIES' })).toHaveLength(4);
   });
   test('filters by type and category', () => {
-    const income = filterTransactions(TRANSACTIONS, { type: 'income' });
-    expect(income.every((t) => t.type === 'income')).toBe(true);
+    const expenses = filterTransactions(TRANSACTIONS, { type: 'expense' });
+    expect(expenses.every((t) => t.type === 'expense')).toBe(true);
     const food = filterTransactions(TRANSACTIONS, { cat: 'Food & Drink' });
     expect(food.every((t) => t.cat === 'Food & Drink')).toBe(true);
   });
@@ -95,17 +98,6 @@ describe('filtering and sorting', () => {
     const top = latestTransactions(TRANSACTIONS, 5);
     expect(top).toHaveLength(5);
     expect(top[0].date).toBe('2026-11-14');
-  });
-});
-
-describe('savingsRate', () => {
-  test('computes a whole percentage', () => {
-    expect(savingsRate(1200, 990)).toBe(18);
-    expect(savingsRate(1200, 1200)).toBe(0);
-  });
-  test('returns null when income is zero or missing', () => {
-    expect(savingsRate(0, 100)).toBeNull();
-    expect(savingsRate(undefined, 100)).toBeNull();
   });
 });
 
@@ -121,9 +113,6 @@ describe('edge cases', () => {
     const rows = computeBudgets(TRANSACTIONS, [{ cat: 'Food & Drink', limit: 0 }], '2026-11');
     expect(rows[0].pct).toBe(0);
     expect(rows[0].left).toBe(-290);
-  });
-  test('savingsRate returns null for negative income', () => {
-    expect(savingsRate(-100, 50)).toBeNull();
   });
   test('deriveCurrentMonth returns null when all dates are malformed', () => {
     expect(deriveCurrentMonth([{ date: 'garbage' }, { date: 'also-bad' }])).toBeNull();
@@ -210,7 +199,6 @@ describe('expense breakdown', () => {
     const rows = spendingByCategory(TRANSACTIONS, '2026-11');
     expect(rows[0]).toEqual({ cat: 'Housing', total: 450 });
     expect(rows.map((r) => r.cat)).toEqual(['Housing', 'Food & Drink', 'Entertainment', 'Transport', 'Education']);
-    expect(rows.some((r) => r.cat === 'Allowance' || r.cat === 'Part-time')).toBe(false);
   });
   test('spendingByMerchant groups and counts expenses', () => {
     const rows = spendingByMerchant(TRANSACTIONS, '2026-11');

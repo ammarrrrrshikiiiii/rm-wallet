@@ -3,7 +3,8 @@
 // localStorage profile keyed by username. The demo account is seeded with the
 // realistic sample data; new accounts start from a chosen preset.
 import {
-  DEMO_TRANSACTIONS, DEMO_BUDGETS, STARTER_TRANSACTIONS, STARTER_BUDGETS, STARTER_GOALS,
+  DEMO_TRANSACTIONS, DEMO_BUDGETS, DEMO_MONTHLY_BUDGET,
+  STARTER_TRANSACTIONS, STARTER_BUDGETS, STARTER_GOALS, STARTER_MONTHLY_BUDGET,
 } from './data.js';
 import { toISODate, transactionsToCSV, parseCSV, toJSON, parseJSON } from './core.js';
 
@@ -44,7 +45,7 @@ export function demoProfile() {
     transactions: DEMO_TRANSACTIONS.map((t) => ({ ...t })),
     budgets: DEMO_BUDGETS.map((b) => ({ ...b })),
     goals: [],
-    settings: { allowanceDate: null, monthlyBudget: 0 },
+    settings: { allowanceDate: null, monthlyBudget: DEMO_MONTHLY_BUDGET },
   };
 }
 
@@ -53,7 +54,7 @@ export function starterProfile() {
     transactions: STARTER_TRANSACTIONS.map((t) => ({ ...t })),
     budgets: STARTER_BUDGETS.map((b) => ({ ...b })),
     goals: STARTER_GOALS.map((g) => ({ ...g })),
-    settings: { allowanceDate: null, monthlyBudget: 0 },
+    settings: { allowanceDate: null, monthlyBudget: STARTER_MONTHLY_BUDGET },
   };
 }
 
@@ -124,6 +125,27 @@ export function addTransaction({ date, desc, cat, type = 'expense', amount, sour
   return p.transactions[p.transactions.length - 1];
 }
 
+export function updateTransaction(id, patch) {
+  const p = ensureProfile();
+  p.transactions = p.transactions.map((t) => (t.id === id ? { ...t, ...patch } : t));
+  writeProfile(currentUser(), p);
+  return p.transactions.find((t) => t.id === id);
+}
+
+export function removeTransaction(id) {
+  const p = ensureProfile();
+  p.transactions = p.transactions.filter((t) => t.id !== id);
+  writeProfile(currentUser(), p);
+}
+
+export function topUpBudget(amount) {
+  const p = ensureProfile();
+  const cur = Number(p.settings.monthlyBudget) || 0;
+  p.settings.monthlyBudget = cur + Number(amount);
+  writeProfile(currentUser(), p);
+  return p.settings.monthlyBudget;
+}
+
 export function saveSettings(patch) {
   const p = ensureProfile();
   p.settings = { ...p.settings, ...patch };
@@ -171,6 +193,7 @@ export function loadSampleData() {
   const p = ensureProfile();
   p.transactions = DEMO_TRANSACTIONS.map((t) => ({ ...t }));
   p.budgets = DEMO_BUDGETS.map((b) => ({ ...b }));
+  p.settings = { ...p.settings, monthlyBudget: DEMO_MONTHLY_BUDGET };
   writeProfile(currentUser(), p);
 }
 

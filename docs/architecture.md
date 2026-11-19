@@ -2,7 +2,7 @@
 
 ## System summary
 
-RM Wallet is a personal finance tracker for students, working in Malaysian Ringgit (RM). It helps a student track income and spending, set monthly category budgets, and see a savings overview.
+RM Wallet is a personal expense tracker for students, working in Malaysian Ringgit (RM). It helps a student track spending, set a monthly budget and per-category limits, and see how much budget remains.
 
 The application is a **static web app**: there is no build step, no backend server, and no database. The site is plain HTML, CSS, and vanilla JavaScript ES modules served directly to the browser, so it can be hosted on any static host (for example GitHub Pages). All interactivity runs client-side; the "database" is static sample data in code, and any user-specific state lives in browser storage.
 
@@ -111,8 +111,8 @@ Each HTML page loads exactly one ES module entry point (`js/login.js`, `js/dashb
 
 The application is a simple one-way data flow with no mutable shared state:
 
-1. **Static sample data** — `js/data.js` exports a fixed `TRANSACTIONS` array (sample income/expense records) and a `BUDGETS` array (per-category monthly limits). This module simulates a database and is also DOM-free so it can be unit-tested.
-2. **Pure functions** — `js/core.js` contains all domain logic as pure functions: the `rm()` currency formatter, `totals()`, `monthName()`, `deriveCurrentMonth()`, `monthsIn()`, `spentInMonth()`, `computeBudgets()`, `filterTransactions()`, `latestTransactions()`, `savingsRate()`, and `escapeHtml()`. These take data in and return new values; they never touch the DOM.
+1. **Static sample data** — `js/data.js` exports a fixed `TRANSACTIONS` array (expense records only) and a `BUDGETS` array (per-category monthly limits). This module simulates a database and is also DOM-free so it can be unit-tested.
+2. **Pure functions** — `js/core.js` contains all domain logic as pure functions: the `rm()` currency formatter, `totalExpenses()`, `monthName()`, `deriveCurrentMonth()`, `monthsIn()`, `spentInMonth()`, `computeBudgets()`, `filterTransactions()`, `latestTransactions()`, and `escapeHtml()`. These take data in and return new values; they never touch the DOM.
 3. **Render** — page modules (`dashboard.js`, `transactions.js`, `budgets.js`) call the pure functions and update the DOM. Before any user-supplied string is injected into `innerHTML`, it is passed through `escapeHtml()` to prevent XSS. `app.js` renders the shared navbar and footer via the same escaping discipline.
 
 In short: `js/data.js → js/core.js (pure functions) → page modules render escaped DOM`. Authentication state is read/written directly against `sessionStorage` (`rmUser`) and `localStorage` (`rmUsers`) by `login.js` and `app.js`.

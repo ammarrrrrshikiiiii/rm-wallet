@@ -1,7 +1,7 @@
 {
   "name": "RM Wallet",
   "short_name": "RM Wallet",
-  "description": "A personal finance tracker for students — track income, spending and budgets in Malaysian Ringgit.",
+  "description": "A personal expense tracker for students — track spending and monthly budgets in Malaysian Ringgit.",
   "start_url": ".",
   "scope": ".",
   "display": "standalone",

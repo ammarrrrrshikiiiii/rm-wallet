@@ -1,6 +1,6 @@
 # RM Wallet
 
-**Know where your allowance goes — one ringgit at a time.** RM Wallet is a fast, dependency-free personal finance tracker for students: track income, spending and monthly budgets in Malaysian Ringgit, with charts that make your money obvious in seconds.
+**Know where your allowance goes — one ringgit at a time.** RM Wallet is a fast, dependency-free personal expense tracker for students: track spending and monthly budgets in Malaysian Ringgit, with charts that make your money obvious in seconds.
 
 [![CI](https://github.com/ammarrrrrshikiiiii/rm-wallet/actions/workflows/ci.yml/badge.svg)](https://github.com/ammarrrrrshikiiiii/rm-wallet/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-1f7a6d.svg)](LICENSE)
@@ -10,10 +10,10 @@
 
 ## Why RM Wallet
 
-A student's money is a small number of ringgit moving between a handful of buckets — allowance in, food, rent and transport out. You don't need a spreadsheet or a banking app to understand it; you need a clear answer to one question: *where did it go?* RM Wallet answers that question with a clean dashboard, a searchable transaction log and per-category budgets that turn red the moment you go over.
+A student's money is a small number of ringgit moving between a handful of buckets — a monthly budget in, food, rent and transport out. You don't need a spreadsheet or a banking app to understand it; you need a clear answer to one question: *where did it go?* RM Wallet answers that question with a clean dashboard, a searchable expense log and per-category budgets that turn red the moment you go over.
 
 - ⚡ **Zero dependencies, zero build.** It's plain HTML, CSS and ES modules. Nothing to install or compile.
-- 📊 **Charts that mean something.** Income vs expenses by month, spending by category, budget vs actual.
+- 📊 **Charts that mean something.** Spending by month, spending by category, budget vs actual.
 - 💸 **Budgets that warn you.** Colour-coded guardrails: green under 70%, amber 70–89%, red 90%+.
 - 🔒 **Hardened by default.** Content-Security-Policy, Subresource Integrity, and XSS-safe rendering.
 - 🧪 **Actually tested.** A unit-test suite and static-integrity checks that run in CI.
@@ -151,7 +151,7 @@ Data flows one way: static sample data (`js/data.js`) → pure functions (`js/co
 
 ## Testing & CI
 
-- **Unit tests** (`bun test`) cover the currency formatter, totals, month/budget math, filtering, savings rate, safe-to-spend, guardrail tiers, keyword suggestion, CSV round-trips and HTML escaping.
+- **Unit tests** (`bun test`) cover the currency formatter, expense totals, month/budget math, filtering, safe-to-spend, guardrail tiers, keyword suggestion, CSV round-trips and HTML escaping.
 - **Integrity checks** (`bun run check`) verify that every local asset resolves, no inline scripts remain, all CDN assets carry SRI, and the core modules stay DOM-free.
 - **GitHub Actions** runs both on every push and pull request; **Dependabot** keeps Actions and the dev dependency current.
 

@@ -43,7 +43,7 @@ export function renderShell(active) {
 
   document.getElementById('foot').innerHTML = `
   <footer class="py-4 mt-5"><div class="container d-flex flex-column flex-md-row justify-content-between gap-2">
-    <div><strong class="text-white">RM Wallet</strong> &mdash; a personal finance tracker for students.<br>Know where your allowance goes.</div>
+    <div><strong class="text-white">RM Wallet</strong> &mdash; a personal expense tracker for students.<br>Track your monthly budget and every ringgit you spend.</div>
     <div class="text-md-end">Sample data only. Built with Bootstrap 5 &amp; Chart.js.<br>&copy; 2026 RM Wallet</div>
   </div></footer>`;
 

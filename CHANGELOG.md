@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-11-19
+
+### Changed
+
+- Switched to an expenses-only model: no manual income entries; remaining budget = monthly budget minus expenses.
+- Renamed summary cards and charts to "Monthly Budget", "Spent So Far", "Remaining Budget" and "Spending by month".
+- Removed income/savings-rate terminology across the UI, metadata and copy.
+
+### Added
+
+- Expense editing and deletion from the Expenses page.
+- "Top up budget" action for mid-month allowance adjustments.
+
 ## [0.4.0] - 2026-11-19
 
 ### Added

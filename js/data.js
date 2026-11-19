@@ -1,4 +1,4 @@
-// ===== RM Wallet – sample data (static, simulates a database) =====
+// ===== RM Wallet – sample data (expenses-only model) =====
 
 // Expense categories shown as quick-add chips and used for budgets.
 export const CATEGORIES = ['Food & Drink', 'Groceries', 'Transport', 'Housing', 'Bills', 'Education', 'Entertainment', 'Other'];
@@ -17,39 +17,33 @@ export const KEYWORD_RULES = [
   [/netflix|spotify|cinema|movie|game|steam|gaming|youtube|concert|entertainment/i, 'Entertainment'],
 ];
 
-// Transaction: [id, date, description, category, type, amount, source]
+// Every entry is an expense. Tuple: [id, date, description, category, amount, source].
 export const TRANSACTIONS = [
-  [1, '2026-06-01', 'Monthly allowance', 'Allowance', 'income', 1200, 'Bank/MAE'],
-  [2, '2026-06-05', 'Hostel & rent', 'Housing', 'expense', 450, 'Bank/MAE'],
-  [3, '2026-06-12', 'Mamak & cafeteria meals', 'Food & Drink', 'expense', 320, 'Cash'],
-  [4, '2026-06-20', 'Part-time tutoring', 'Part-time', 'income', 400, 'Bank/MAE'],
-  [5, '2026-07-01', 'Monthly allowance', 'Allowance', 'income', 1200, 'Bank/MAE'],
-  [6, '2026-07-04', 'Hostel & rent', 'Housing', 'expense', 450, 'Bank/MAE'],
-  [7, '2026-07-10', "Grab rides & Touch 'n Go", 'Transport', 'expense', 130, 'E-Wallet/TnG'],
-  [8, '2026-07-18', 'Textbooks', 'Education', 'expense', 210, 'Cash'],
-  [9, '2026-07-25', 'Part-time tutoring', 'Part-time', 'income', 500, 'Bank/MAE'],
-  [10, '2026-08-01', 'Monthly allowance', 'Allowance', 'income', 1200, 'Bank/MAE'],
-  [11, '2026-08-05', 'Hostel & rent', 'Housing', 'expense', 450, 'Bank/MAE'],
-  [12, '2026-08-09', 'Groceries & meals', 'Food & Drink', 'expense', 360, 'Cash'],
-  [13, '2026-08-22', 'Cinema & Netflix', 'Entertainment', 'expense', 95, 'E-Wallet/TnG'],
-  [14, '2026-08-28', 'Freelance poster design', 'Part-time', 'income', 350, 'Bank/MAE'],
-  [15, '2026-09-01', 'Monthly allowance', 'Allowance', 'income', 1200, 'Bank/MAE'],
-  [16, '2026-09-04', 'Hostel & rent', 'Housing', 'expense', 450, 'Bank/MAE'],
-  [17, '2026-09-11', 'Groceries & meals', 'Food & Drink', 'expense', 340, 'Cash'],
-  [18, '2026-09-19', 'Bus & LRT pass', 'Transport', 'expense', 110, 'E-Wallet/TnG'],
-  [19, '2026-09-27', 'Part-time tutoring', 'Part-time', 'income', 450, 'Bank/MAE'],
-  [20, '2026-10-01', 'Monthly allowance', 'Allowance', 'income', 1200, 'Bank/MAE'],
-  [21, '2026-10-04', 'Hostel & rent', 'Housing', 'expense', 450, 'Bank/MAE'],
-  [22, '2026-10-13', 'Groceries & meals', 'Food & Drink', 'expense', 380, 'Cash'],
-  [23, '2026-10-21', 'Course materials', 'Education', 'expense', 150, 'Cash'],
-  [24, '2026-10-30', 'Part-time tutoring', 'Part-time', 'income', 420, 'Bank/MAE'],
-  [25, '2026-11-01', 'Monthly allowance', 'Allowance', 'income', 1200, 'Bank/MAE'],
-  [26, '2026-11-03', 'Hostel & rent', 'Housing', 'expense', 450, 'Bank/MAE'],
-  [27, '2026-11-07', 'Groceries & meals', 'Food & Drink', 'expense', 290, 'Cash'],
-  [28, '2026-11-10', 'Grab rides', 'Transport', 'expense', 85, 'E-Wallet/TnG'],
-  [29, '2026-11-12', 'Gaming & streaming', 'Entertainment', 'expense', 120, 'E-Wallet/TnG'],
-  [30, '2026-11-14', 'Printing & stationery', 'Education', 'expense', 45, 'Cash'],
-].map(([id, date, desc, cat, type, amount, source]) => ({ id, date, desc, cat, type, amount, source }));
+  [1, '2026-06-05', 'Hostel & rent', 'Housing', 450, 'Bank/MAE'],
+  [2, '2026-06-12', 'Mamak & cafeteria meals', 'Food & Drink', 320, 'Cash'],
+  [3, '2026-06-18', 'Bus & LRT pass', 'Transport', 110, 'E-Wallet/TnG'],
+  [4, '2026-07-04', 'Hostel & rent', 'Housing', 450, 'Bank/MAE'],
+  [5, '2026-07-10', "Grab rides & Touch 'n Go", 'Transport', 130, 'E-Wallet/TnG'],
+  [6, '2026-07-18', 'Textbooks', 'Education', 210, 'Cash'],
+  [7, '2026-07-22', 'Cinema & Netflix', 'Entertainment', 95, 'E-Wallet/TnG'],
+  [8, '2026-08-05', 'Hostel & rent', 'Housing', 450, 'Bank/MAE'],
+  [9, '2026-08-09', 'Groceries & meals', 'Food & Drink', 360, 'Cash'],
+  [10, '2026-08-25', 'Cinema & Netflix', 'Entertainment', 95, 'E-Wallet/TnG'],
+  [11, '2026-08-28', 'Printing & stationery', 'Education', 45, 'Cash'],
+  [12, '2026-09-04', 'Hostel & rent', 'Housing', 450, 'Bank/MAE'],
+  [13, '2026-09-11', 'Groceries & meals', 'Food & Drink', 340, 'Cash'],
+  [14, '2026-09-19', 'Bus & LRT pass', 'Transport', 110, 'E-Wallet/TnG'],
+  [15, '2026-09-26', 'Gaming & streaming', 'Entertainment', 120, 'E-Wallet/TnG'],
+  [16, '2026-10-04', 'Hostel & rent', 'Housing', 450, 'Bank/MAE'],
+  [17, '2026-10-13', 'Groceries & meals', 'Food & Drink', 380, 'Cash'],
+  [18, '2026-10-21', 'Course materials', 'Education', 150, 'Cash'],
+  [19, '2026-10-25', 'Grab rides', 'Transport', 85, 'E-Wallet/TnG'],
+  [20, '2026-11-03', 'Hostel & rent', 'Housing', 450, 'Bank/MAE'],
+  [21, '2026-11-07', 'Groceries & meals', 'Food & Drink', 290, 'Cash'],
+  [22, '2026-11-10', 'Grab rides', 'Transport', 85, 'E-Wallet/TnG'],
+  [23, '2026-11-12', 'Gaming & streaming', 'Entertainment', 120, 'E-Wallet/TnG'],
+  [24, '2026-11-14', 'Printing & stationery', 'Education', 45, 'Cash'],
+].map(([id, date, desc, cat, amount, source]) => ({ id, date, desc, cat, type: 'expense', amount, source }));
 
 // Monthly budget limits (RM) per expense category.
 export const BUDGETS = [
@@ -75,11 +69,12 @@ export const CATEGORY_META = {
   'Other': { icon: 'bi-three-dots', color: '#9aa7a3' },
 };
 
-// Demo-account aliases (the realistic sample set).
+// Demo account: the realistic sample set above, with a monthly budget.
 export const DEMO_TRANSACTIONS = TRANSACTIONS;
 export const DEMO_BUDGETS = BUDGETS;
+export const DEMO_MONTHLY_BUDGET = 1200;
 
-// "Student Allowance Starter" preset: a lightweight budget + a few transactions so
+// "Student Allowance Starter" preset: a lightweight budget + a few expenses so
 // charts and metrics are visible immediately.
 export const STARTER_BUDGETS = [
   { cat: 'Food & Drink', limit: 300 },
@@ -91,12 +86,13 @@ export const STARTER_BUDGETS = [
 ];
 
 export const STARTER_TRANSACTIONS = [
-  { id: 1, date: '2026-11-01', desc: 'Monthly allowance', cat: 'Allowance', type: 'income', amount: 800, source: 'Bank/MAE' },
-  { id: 2, date: '2026-11-02', desc: 'Mamak dinner', cat: 'Food & Drink', type: 'expense', amount: 24, source: 'Cash' },
-  { id: 3, date: '2026-11-03', desc: 'Grab to campus', cat: 'Transport', type: 'expense', amount: 12, source: 'E-Wallet/TnG' },
-  { id: 4, date: '2026-11-05', desc: 'Groceries (Mydin)', cat: 'Groceries', type: 'expense', amount: 46, source: 'Cash' },
-  { id: 5, date: '2026-11-08', desc: 'Netflix subscription', cat: 'Entertainment', type: 'expense', amount: 18, source: 'E-Wallet/TnG' },
+  { id: 1, date: '2026-11-02', desc: 'Mamak dinner', cat: 'Food & Drink', type: 'expense', amount: 24, source: 'Cash' },
+  { id: 2, date: '2026-11-03', desc: 'Grab to campus', cat: 'Transport', type: 'expense', amount: 12, source: 'E-Wallet/TnG' },
+  { id: 3, date: '2026-11-05', desc: 'Groceries (Mydin)', cat: 'Groceries', type: 'expense', amount: 46, source: 'Cash' },
+  { id: 4, date: '2026-11-08', desc: 'Netflix subscription', cat: 'Entertainment', type: 'expense', amount: 18, source: 'E-Wallet/TnG' },
 ];
+
+export const STARTER_MONTHLY_BUDGET = 800;
 
 export const STARTER_GOALS = [
   { id: 1, name: 'Emergency fund', target: 500, saved: 100 },

@@ -1,13 +1,13 @@
-// ===== Dashboard page =====
+// ===== Dashboard page (expenses-only) =====
 import { CATEGORIES, PAYMENT_METHODS, KEYWORD_RULES } from './data.js';
 import { renderShell } from './app.js';
 import {
   getTransactions, addTransaction, getBudgets, getGoals, addGoal, updateGoal, removeGoal,
-  getSettings, saveSettings, todayISO, isDemo, loadSampleData, clearAllData, resetDemo,
+  getSettings, saveSettings, topUpBudget, todayISO, isDemo, loadSampleData, clearAllData, resetDemo,
 } from './store.js';
 import {
-  rm, totals, monthName, deriveCurrentMonth, monthsIn, savingsRate, latestTransactions, escapeHtml, PALETTE,
-  safeToSpend, daysUntil, lastDayOfMonth, suggestCategory,
+  rm, monthName, deriveCurrentMonth, monthsIn, latestTransactions, escapeHtml, PALETTE,
+  safeToSpend, daysUntil, lastDayOfMonth, suggestCategory, totalExpenses,
 } from './core.js';
 
 const $ = (id) => document.getElementById(id);
@@ -20,27 +20,32 @@ function destroyCharts() {
   charts = [];
 }
 
+function effectiveBudget() {
+  const settings = getSettings();
+  if (Number(settings.monthlyBudget) > 0) return Number(settings.monthlyBudget);
+  return getBudgets().reduce((s, b) => s + b.limit, 0);
+}
+
 function renderCharts(txns, month, cur) {
   const months = monthsIn(txns);
+
+  // Spending by month (expenses only, single series).
   charts.push(new Chart('cMonth', {
     type: 'bar',
     data: {
       labels: months.map(monthName),
-      datasets: [
-        { label: 'Income', backgroundColor: '#1f7a6d', data: months.map((x) => totals(txns.filter((t) => String(t.date).startsWith(x))).income) },
-        { label: 'Expenses', backgroundColor: '#e0604a', data: months.map((x) => totals(txns.filter((t) => String(t.date).startsWith(x))).expense) },
-      ],
+      datasets: [{ label: 'Spent', backgroundColor: '#1f7a6d', data: months.map((x) => totalExpenses(txns, x)) }],
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
       scales: { y: { ticks: { callback: (v) => 'RM ' + v } } },
-      plugins: { tooltip: { callbacks: { label: (c) => c.dataset.label + ': ' + rm(c.raw) } } },
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => 'Spent: ' + rm(c.raw) } } },
     },
   }));
 
   const cats = {};
-  cur.filter((t) => t.type === 'expense').forEach((t) => { cats[t.cat] = (cats[t.cat] || 0) + t.amount; });
+  cur.forEach((t) => { cats[t.cat] = (cats[t.cat] || 0) + t.amount; });
   charts.push(new Chart('cCat', {
     type: 'doughnut',
     data: { labels: Object.keys(cats), datasets: [{ data: Object.values(cats), backgroundColor: PALETTE }] },
@@ -53,18 +58,14 @@ function renderCharts(txns, month, cur) {
   }));
 }
 
-function renderSafeToSpend(txns, month) {
+function renderSafeToSpend(month, budgetTotal, spent) {
   const settings = getSettings();
   const monthEnd = month ? lastDayOfMonth(month) : todayISO();
   const allowance = settings.allowanceDate || monthEnd;
-  const spent = totals(txns.filter((t) => t.type === 'expense' && String(t.date).startsWith(month))).expense;
-  const budgetTotal = getBudgets().reduce((s, b) => s + b.limit, 0);
-  const totalBudget = Number(settings.monthlyBudget) > 0 ? Number(settings.monthlyBudget) : budgetTotal;
-
   $('allowanceDate').value = allowance;
 
   const card = $('safeCard');
-  if (totalBudget <= 0) {
+  if (budgetTotal <= 0) {
     card.className = 'hero-safe green';
     $('safeValue').textContent = 'Set a budget';
     $('safeBadge').innerHTML = 'Getting started';
@@ -74,13 +75,13 @@ function renderSafeToSpend(txns, month) {
   }
 
   $('budgetSetup').hidden = true;
-  const remaining = totalBudget - spent;
+  const remaining = budgetTotal - spent;
   const days = daysUntil(todayISO(), allowance);
   const sts = safeToSpend(remaining, days);
   card.className = 'hero-safe ' + sts.status;
   $('safeValue').textContent = `${rm(sts.perDay)}/day`;
   $('safeBadge').innerHTML = STATUS_LABEL[sts.status];
-  $('safeSub').textContent = `${rm(remaining)} left \u00b7 ${days} day${days === 1 ? '' : 's'} until allowance`;
+  $('safeSub').textContent = `${rm(remaining)} remaining \u00b7 ${days} day${days === 1 ? '' : 's'} until allowance`;
 }
 
 function renderChips() {
@@ -144,8 +145,6 @@ function renderAll() {
   const txns = getTransactions();
   const month = deriveCurrentMonth(txns);
   const cur = txns.filter((t) => String(t.date).startsWith(month));
-  const all = totals(txns);
-  const m = totals(cur);
   const months = monthsIn(txns);
 
   const year = month ? month.slice(0, 4) : '';
@@ -153,44 +152,42 @@ function renderAll() {
     ? `Welcome back, ${sessionStorage.getItem('rmUser') || 'guest'}. Here is your ${monthName(month)} ${year} snapshot.`
     : `Welcome back, ${sessionStorage.getItem('rmUser') || 'guest'}.`;
 
-  $('sBalLabel').textContent = months.length >= 2
-    ? `Balance (${monthName(months[0])}\u2013${monthName(months[months.length - 1])})`
-    : 'Total balance';
+  const budgetTotal = effectiveBudget();
+  const spent = totalExpenses(cur);
+  const remaining = budgetTotal - spent;
   const mLabel = month ? ` (${monthName(month)})` : '';
-  $('sIncLabel').textContent = `Income${mLabel}`;
-  $('sExpLabel').textContent = `Spent${mLabel}`;
-  $('sRateLabel').textContent = `Savings rate${mLabel}`;
-  $('sBal').textContent = rm(all.balance);
-  $('sInc').textContent = rm(m.income);
-  $('sExp').textContent = rm(m.expense);
-  const rate = savingsRate(m.income, m.expense);
-  $('sRate').textContent = rate === null ? '\u2014' : `${rate}%`;
+
+  $('sBudgetLabel').textContent = 'Monthly Budget';
+  $('sSpentLabel').textContent = `Spent So Far${mLabel}`;
+  $('sRemainLabel').textContent = `Remaining Budget${mLabel}`;
+  $('sBudget').textContent = rm(budgetTotal);
+  $('sSpent').textContent = rm(spent);
+  const remEl = $('sRemain');
+  remEl.textContent = rm(remaining);
+  remEl.className = 'stat-value ' + (remaining < 0 ? 'amt-out' : 'amt-in');
 
   const recent = latestTransactions(txns, 5);
   $('recent').innerHTML = recent.length
-    ? recent.map((t) => `<tr><td>${escapeHtml(t.date)}</td><td>${escapeHtml(t.desc)}</td><td>${escapeHtml(t.cat)}</td><td><span class="badge rounded-pill badge-source">${escapeHtml(t.source || '')}</span></td><td class="text-end ${t.type === 'income' ? 'amt-in' : 'amt-out'}">${t.type === 'income' ? '+' : '-'}${rm(t.amount)}</td></tr>`).join('')
-    : '<tr><td colspan="5" class="text-center text-secondary py-4">No transactions yet. Add one below or load sample data.</td></tr>';
+    ? recent.map((t) => `<tr><td>${escapeHtml(t.date)}</td><td>${escapeHtml(t.desc)}</td><td>${escapeHtml(t.cat)}</td><td><span class="badge rounded-pill badge-source">${escapeHtml(t.source || '')}</span></td><td class="text-end amt-out">-${rm(t.amount)}</td></tr>`).join('')
+    : '<tr><td colspan="5" class="text-center text-secondary py-4">No expenses yet. Add one below or load sample data.</td></tr>';
 
-  renderSafeToSpend(txns, month);
+  renderSafeToSpend(month, budgetTotal, spent);
   renderGoals();
   destroyCharts();
   renderCharts(txns, month, cur);
 }
 
 if (renderShell('dashboard')) {
-  // Payment source select.
   $('qaSource').innerHTML = PAYMENT_METHODS.map((s) => `<option>${escapeHtml(s)}</option>`).join('');
 
   renderChips();
   renderAll();
 
-  // Allowance date change.
   $('allowanceDate').addEventListener('change', () => {
     saveSettings({ allowanceDate: $('allowanceDate').value || null });
     renderAll();
   });
 
-  // Auto-category suggestion from the note.
   $('qaNote').addEventListener('input', () => {
     const suggested = suggestCategory($('qaNote').value, KEYWORD_RULES);
     if (suggested) {
@@ -202,7 +199,6 @@ if (renderShell('dashboard')) {
     }
   });
 
-  // Quick-add submit.
   $('qaAdd').addEventListener('click', () => {
     const amount = Number($('qaAmount').value);
     const desc = $('qaNote').value.trim();
@@ -221,7 +217,6 @@ if (renderShell('dashboard')) {
     renderAll();
   });
 
-  // Savings goal form.
   $('goalToggle').addEventListener('click', () => {
     $('goalForm').hidden = !$('goalForm').hidden;
   });
@@ -236,11 +231,22 @@ if (renderShell('dashboard')) {
     renderAll();
   });
 
-  // Monthly budget quick-setup (fresh accounts).
+  // Monthly budget quick-setup (fresh accounts) and top-up (existing budget).
   $('saveBudget').addEventListener('click', () => {
     const v = Number($('monthlyBudget').value);
     if (!Number.isFinite(v) || v <= 0) return;
     saveSettings({ monthlyBudget: v });
+    renderAll();
+  });
+  $('topUpToggle').addEventListener('click', () => {
+    $('topUpForm').hidden = !$('topUpForm').hidden;
+  });
+  $('topUpApply').addEventListener('click', () => {
+    const v = Number($('topUpAmount').value);
+    if (!Number.isFinite(v) || v <= 0) return;
+    topUpBudget(v);
+    $('topUpAmount').value = '';
+    $('topUpForm').hidden = true;
     renderAll();
   });
 
