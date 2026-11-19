@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { TRANSACTIONS, BUDGETS } from '../js/data.js';
+import { TRANSACTIONS, BUDGETS, CATEGORIES, PAYMENT_METHODS } from '../js/data.js';
 
 describe('sample data integrity', () => {
   test('every transaction has the required fields with valid types', () => {
@@ -15,15 +15,19 @@ describe('sample data integrity', () => {
     }
   });
 
-  test('every budget category appears in the transactions', () => {
-    const cats = new Set(TRANSACTIONS.map((t) => t.cat));
-    for (const b of BUDGETS) {
-      expect(cats.has(b.cat)).toBe(true);
+  test('every transaction has a known payment source', () => {
+    for (const t of TRANSACTIONS) {
+      expect(PAYMENT_METHODS).toContain(t.source);
     }
   });
 
-  test('budget limits are positive numbers', () => {
+  test('expense categories and budget limits are valid', () => {
+    const cats = new Set(CATEGORIES);
+    for (const t of TRANSACTIONS) {
+      if (t.type === 'expense') expect(cats.has(t.cat)).toBe(true);
+    }
     for (const b of BUDGETS) {
+      expect(cats.has(b.cat)).toBe(true);
       expect(Number.isFinite(b.limit)).toBe(true);
       expect(b.limit).toBeGreaterThan(0);
     }

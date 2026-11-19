@@ -41,9 +41,8 @@ try {
   await page.evaluate(() => document.fonts.ready);
   await page.screenshot({ path: resolve(ROOT, 'docs/screenshot-login.png') });
 
-  // Dashboard (after the demo login).
+  // Dashboard (the demo button signs in instantly).
   await page.click('button#fillDemo');
-  await page.click('button#go');
   await page.waitForURL('**/dashboard.html');
   await page.waitForLoadState('networkidle');
   await page.evaluate(() => document.fonts.ready);
