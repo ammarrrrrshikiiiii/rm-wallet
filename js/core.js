@@ -162,6 +162,20 @@ export function expensesBetween(transactions, startISO, endISO) {
     .reduce((sum, t) => sum + (Number.isFinite(Number(t.amount)) ? Number(t.amount) : 0), 0);
 }
 
+// Sum of expenses logged on a single date.
+export function expensesOnDate(transactions, isoDate) {
+  return (Array.isArray(transactions) ? transactions : [])
+    .filter((t) => t.type === 'expense' && String(t.date) === isoDate)
+    .reduce((sum, t) => sum + (Number.isFinite(Number(t.amount)) ? Number(t.amount) : 0), 0);
+}
+
+// Sum of period expenses whose date is strictly before `beforeISO` (i.e. before today).
+export function expensesBeforeDate(transactions, startISO, endISO, beforeISO) {
+  return (Array.isArray(transactions) ? transactions : [])
+    .filter((t) => t.type === 'expense' && String(t.date) >= startISO && String(t.date) <= endISO && String(t.date) < beforeISO)
+    .reduce((sum, t) => sum + (Number.isFinite(Number(t.amount)) ? Number(t.amount) : 0), 0);
+}
+
 // Daily amount below which the safe-to-spend indicator turns amber.
 export const DAILY_LOW = 15;
 
@@ -174,6 +188,22 @@ export function safeToSpend(remainingBudget, daysRemaining) {
   if (left <= 0) status = 'red';
   else if (perDay < DAILY_LOW) status = 'amber';
   return { perDay, days, status };
+}
+
+// Today's safe-to-spend view. The day's allowance is the remaining budget at the
+// start of today divided by the remaining days; today's spending is then deducted
+// from that allowance. `spentBeforeToday` and `spentToday` are within the period.
+export function safeToSpendToday(budget, spentBeforeToday, spentToday, remainingDays) {
+  const b = Number.isFinite(Number(budget)) ? Number(budget) : 0;
+  const before = Number(spentBeforeToday) || 0;
+  const today = Number(spentToday) || 0;
+  const days = Math.max(1, Math.floor(Number(remainingDays) || 0));
+  const todayAllowance = (b - before) / days;
+  const todayLeft = todayAllowance - today;
+  let status = 'green';
+  if (todayLeft <= 0) status = 'red';
+  else if (todayLeft < DAILY_LOW) status = 'amber';
+  return { todayAllowance, todayLeft, status };
 }
 
 // Budget guardrail tier: green <70%, amber 70-89%, red >=90%.

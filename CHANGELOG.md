@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-11-19
+
+### Added
+
+- "Today's safe-to-spend left": each day's allowance is computed from the remaining budget across remaining days, then today's spending is deducted.
+- Clear hero breakdown separating today's left from the daily rate and period budget.
+
 ## [0.6.0] - 2026-11-19
 
 ### Fixed
