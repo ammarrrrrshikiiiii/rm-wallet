@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-19
+
+### Added
+
+- MAE-style expense breakdown view with month selector tabs.
+- "Spent so far" donut ring chart with month-over-month comparison pill.
+- Latest / Categories / Merchants sub-views and a tap-to-filter category summary strip.
+- "Add Expense" modal and collapsible "Filter" quick actions.
+- Expense-only grouping helpers (category, merchant, month-over-month) with tests.
+
+### Changed
+
+- Renamed the Transactions view to Expenses with expense-only monthly filtering.
+
 ## [0.2.0] - 2026-11-19
 
 ### Added

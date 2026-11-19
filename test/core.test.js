@@ -4,6 +4,7 @@ import {
   computeBudgets, filterTransactions, latestTransactions, savingsRate, escapeHtml,
   safeToSpend, budgetTier, daysUntil, lastDayOfMonth, suggestCategory, toISODate,
   transactionsToCSV, parseCSV, DAILY_LOW,
+  spendingByCategory, spendingByMerchant, monthOverMonthChange,
 } from '../js/core.js';
 import { TRANSACTIONS, BUDGETS, KEYWORD_RULES } from '../js/data.js';
 
@@ -201,5 +202,24 @@ describe('CSV round-trip', () => {
     const back = parseCSV(transactionsToCSV(list));
     expect(back[0].desc).toBe('Mamak, teh & roti');
     expect(back[0].amount).toBe(12.5);
+  });
+});
+
+describe('expense breakdown', () => {
+  test('spendingByCategory sums only expenses for the month, sorted', () => {
+    const rows = spendingByCategory(TRANSACTIONS, '2026-11');
+    expect(rows[0]).toEqual({ cat: 'Housing', total: 450 });
+    expect(rows.map((r) => r.cat)).toEqual(['Housing', 'Food & Drink', 'Entertainment', 'Transport', 'Education']);
+    expect(rows.some((r) => r.cat === 'Allowance' || r.cat === 'Part-time')).toBe(false);
+  });
+  test('spendingByMerchant groups and counts expenses', () => {
+    const rows = spendingByMerchant(TRANSACTIONS, '2026-11');
+    expect(rows[0]).toEqual({ merchant: 'Hostel & rent', total: 450, count: 1 });
+  });
+  test('monthOverMonthChange computes a percentage or null', () => {
+    expect(monthOverMonthChange(990, 980)).toBe(1);
+    expect(monthOverMonthChange(500, 1000)).toBe(-50);
+    expect(monthOverMonthChange(500, 0)).toBeNull();
+    expect(monthOverMonthChange(500, undefined)).toBeNull();
   });
 });

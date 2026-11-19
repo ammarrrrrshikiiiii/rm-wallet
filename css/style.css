@@ -66,3 +66,34 @@ footer a{color:#fff}
 /* ===== Allowance date control ===== */
 .allowance-control{font-size:.85rem}
 .allowance-control input[type=date]{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:.5rem;padding:.2rem .5rem}
+
+/* ===== Expense breakdown view ===== */
+.month-tabs{display:flex;gap:.4rem;overflow-x:auto;padding-bottom:.25rem}
+.month-tab{border:1px solid var(--line);background:#fff;border-radius:999px;padding:.35rem 1.05rem;font-weight:600;font-size:.85rem;cursor:pointer;white-space:nowrap;color:var(--ink)}
+.month-tab:hover{border-color:var(--teal)}
+.month-tab.active{background:var(--ink);color:#fff;border-color:var(--ink)}
+
+.donut-wrap{position:relative;width:min(240px,72vw);height:min(240px,72vw);margin:0 auto}
+.donut-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;pointer-events:none}
+.donut-center .dc-label{font-size:.8rem;color:#5b7370}
+.donut-center .dc-value{font-family:'Bricolage Grotesque',sans-serif;font-size:1.55rem;font-weight:700;line-height:1.1}
+
+.category-strip{display:flex;gap:1rem;overflow-x:auto;padding:.25rem .1rem .5rem}
+.cat-item{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:.35rem;cursor:pointer;background:none;border:0;min-width:70px;padding:.3rem}
+.cat-item .cat-orb{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.35rem;transition:transform .12s}
+.cat-item:hover .cat-orb{transform:scale(1.06)}
+.cat-item .cat-name{font-size:.76rem;color:#3c5a54;text-align:center;line-height:1.15}
+.cat-item .cat-amt{font-size:.8rem;color:var(--coral);font-weight:600}
+.cat-item.active .cat-orb{outline:3px solid var(--amber);outline-offset:2px}
+
+.subnav{display:flex;gap:.25rem;border-bottom:1px solid var(--line);margin-bottom:1rem;overflow-x:auto}
+.subnav button{border:0;background:none;padding:.55rem .9rem;font-weight:600;color:#5b7370;border-bottom:2px solid transparent;white-space:nowrap}
+.subnav button.active{color:var(--teal);border-bottom-color:var(--teal)}
+
+.breakdown-row{display:flex;align-items:center;gap:.75rem;padding:.7rem 0;border-bottom:1px solid var(--line)}
+.breakdown-row:last-child{border-bottom:0}
+.breakdown-row .br-icon{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;flex:0 0 auto}
+.breakdown-row .br-main{flex:1;min-width:0}
+.breakdown-row .br-name{font-weight:600}
+.breakdown-row .br-sub{font-size:.8rem;color:#5b7370}
+.breakdown-row .br-amt{font-weight:600;color:var(--coral)}

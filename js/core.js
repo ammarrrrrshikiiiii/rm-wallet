@@ -216,3 +216,38 @@ export function parseCSV(text) {
 // Round-trip-safe JSON helpers (kept pure and injectable for tests).
 export function toJSON(value) { return JSON.stringify(value, null, 2); }
 export function parseJSON(text) { return JSON.parse(text); }
+
+// Expenses only, grouped by category for a month, sorted highest first.
+export function spendingByCategory(transactions, month) {
+  const map = {};
+  (Array.isArray(transactions) ? transactions : []).forEach((t) => {
+    if (t.type !== 'expense' || !String(t.date).startsWith(month)) return;
+    const amount = Number(t.amount) || 0;
+    map[t.cat] = (map[t.cat] || 0) + amount;
+  });
+  return Object.entries(map).map(([cat, total]) => ({ cat, total })).sort((a, b) => b.total - a.total);
+}
+
+// Expenses only, grouped by merchant (description) for a month, sorted highest first.
+export function spendingByMerchant(transactions, month) {
+  const map = {};
+  (Array.isArray(transactions) ? transactions : []).forEach((t) => {
+    if (t.type !== 'expense' || !String(t.date).startsWith(month)) return;
+    const amount = Number(t.amount) || 0;
+    const merchant = t.desc || 'Unknown';
+    map[merchant] = map[merchant] || { total: 0, count: 0 };
+    map[merchant].total += amount;
+    map[merchant].count += 1;
+  });
+  return Object.entries(map)
+    .map(([merchant, v]) => ({ merchant, total: v.total, count: v.count }))
+    .sort((a, b) => b.total - a.total);
+}
+
+// Month-over-month percentage change, or null when the base month is zero/missing.
+export function monthOverMonthChange(current, previous) {
+  const c = Number(current);
+  const p = Number(previous);
+  if (!Number.isFinite(c) || !Number.isFinite(p) || p === 0) return null;
+  return Math.round(((c - p) / p) * 100);
+}

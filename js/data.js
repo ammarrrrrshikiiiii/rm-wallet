@@ -62,3 +62,15 @@ export const BUDGETS = [
   { cat: 'Entertainment', limit: 100 },
   { cat: 'Other', limit: 80 },
 ];
+
+// Icon + colour per category (used by the expense breakdown view).
+export const CATEGORY_META = {
+  'Food & Drink': { icon: 'bi-cup-straw', color: '#1f7a6d' },
+  'Groceries': { icon: 'bi-basket', color: '#7fb77e' },
+  'Transport': { icon: 'bi-bus-front', color: '#4f8fba' },
+  'Housing': { icon: 'bi-house-door', color: '#8a6fb0' },
+  'Bills': { icon: 'bi-receipt', color: '#e9a23b' },
+  'Education': { icon: 'bi-book', color: '#5b8a5c' },
+  'Entertainment': { icon: 'bi-controller', color: '#e0604a' },
+  'Other': { icon: 'bi-three-dots', color: '#9aa7a3' },
+};
