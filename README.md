@@ -52,6 +52,7 @@ You can also register a new account — it's stored in your browser's `localStor
 - **Multi-wallet** — tag every transaction by payment source (Cash, Bank/MAE, E-Wallet/TnG) and filter by it.
 - **Tabung (savings goals)** — visual savings jars with progress fills and top-ups.
 - **Budget guardrails** — colour-coded progress bars: green <70%, amber 70–89%, red 90%+.
+- **MAE-style expense breakdown** — month selector tabs, a "Spent so far" donut with month-over-month pill, and Latest / Categories / Merchants views with a tap-to-filter category strip.
 - **Backup & portability** — export/import your data as JSON or CSV.
 - **Installable (PWA)** — add RM Wallet to your home screen with a manifest, icons and an offline service worker.
 - **Responsive & accessible** — mobile-first, with `aria-live` status, labelled charts and WCAG-AA contrast.
@@ -74,7 +75,7 @@ Or via `make`: `make start`, `make test`, `make check`.
 .
 ├── index.html            login / register
 ├── dashboard.html        overview with charts
-├── transactions.html     searchable, filterable log
+├── transactions.html     MAE-style expense breakdown
 ├── budgets.html          limits vs actual spending
 ├── css/style.css         global styles
 ├── js/
