@@ -3,7 +3,7 @@ import { CATEGORIES, PAYMENT_METHODS, KEYWORD_RULES } from './data.js';
 import { renderShell } from './app.js';
 import {
   getTransactions, addTransaction, getBudgets, getGoals, addGoal, updateGoal, removeGoal,
-  getSettings, saveSettings, todayISO,
+  getSettings, saveSettings, todayISO, isDemo, loadSampleData, clearAllData, resetDemo,
 } from './store.js';
 import {
   rm, totals, monthName, deriveCurrentMonth, monthsIn, savingsRate, latestTransactions, escapeHtml, PALETTE,
@@ -58,17 +58,29 @@ function renderSafeToSpend(txns, month) {
   const monthEnd = month ? lastDayOfMonth(month) : todayISO();
   const allowance = settings.allowanceDate || monthEnd;
   const spent = totals(txns.filter((t) => t.type === 'expense' && String(t.date).startsWith(month))).expense;
-  const totalBudget = getBudgets().reduce((s, b) => s + b.limit, 0);
+  const budgetTotal = getBudgets().reduce((s, b) => s + b.limit, 0);
+  const totalBudget = Number(settings.monthlyBudget) > 0 ? Number(settings.monthlyBudget) : budgetTotal;
+
+  $('allowanceDate').value = allowance;
+
+  const card = $('safeCard');
+  if (totalBudget <= 0) {
+    card.className = 'hero-safe green';
+    $('safeValue').textContent = 'Set a budget';
+    $('safeBadge').innerHTML = 'Getting started';
+    $('safeSub').textContent = 'Enter a monthly budget to unlock safe-to-spend.';
+    $('budgetSetup').hidden = false;
+    return;
+  }
+
+  $('budgetSetup').hidden = true;
   const remaining = totalBudget - spent;
   const days = daysUntil(todayISO(), allowance);
   const sts = safeToSpend(remaining, days);
-
-  const card = $('safeCard');
   card.className = 'hero-safe ' + sts.status;
   $('safeValue').textContent = `${rm(sts.perDay)}/day`;
   $('safeBadge').innerHTML = STATUS_LABEL[sts.status];
   $('safeSub').textContent = `${rm(remaining)} left \u00b7 ${days} day${days === 1 ? '' : 's'} until allowance`;
-  $('allowanceDate').value = allowance;
 }
 
 function renderChips() {
@@ -154,9 +166,10 @@ function renderAll() {
   const rate = savingsRate(m.income, m.expense);
   $('sRate').textContent = rate === null ? '\u2014' : `${rate}%`;
 
-  $('recent').innerHTML = latestTransactions(txns, 5)
-    .map((t) => `<tr><td>${escapeHtml(t.date)}</td><td>${escapeHtml(t.desc)}</td><td>${escapeHtml(t.cat)}</td><td><span class="badge rounded-pill badge-source">${escapeHtml(t.source || '')}</span></td><td class="text-end ${t.type === 'income' ? 'amt-in' : 'amt-out'}">${t.type === 'income' ? '+' : '-'}${rm(t.amount)}</td></tr>`)
-    .join('');
+  const recent = latestTransactions(txns, 5);
+  $('recent').innerHTML = recent.length
+    ? recent.map((t) => `<tr><td>${escapeHtml(t.date)}</td><td>${escapeHtml(t.desc)}</td><td>${escapeHtml(t.cat)}</td><td><span class="badge rounded-pill badge-source">${escapeHtml(t.source || '')}</span></td><td class="text-end ${t.type === 'income' ? 'amt-in' : 'amt-out'}">${t.type === 'income' ? '+' : '-'}${rm(t.amount)}</td></tr>`).join('')
+    : '<tr><td colspan="5" class="text-center text-secondary py-4">No transactions yet. Add one below or load sample data.</td></tr>';
 
   renderSafeToSpend(txns, month);
   renderGoals();
@@ -222,4 +235,22 @@ if (renderShell('dashboard')) {
     $('goalForm').hidden = true;
     renderAll();
   });
+
+  // Monthly budget quick-setup (fresh accounts).
+  $('saveBudget').addEventListener('click', () => {
+    const v = Number($('monthlyBudget').value);
+    if (!Number.isFinite(v) || v <= 0) return;
+    saveSettings({ monthlyBudget: v });
+    renderAll();
+  });
+
+  // Data actions (per-account).
+  const dataModal = new bootstrap.Modal($('dataModal'));
+  $('dataBtn').addEventListener('click', () => {
+    $('resetDemoBtn').classList.toggle('d-none', !isDemo());
+    dataModal.show();
+  });
+  $('loadSampleBtn').addEventListener('click', () => { loadSampleData(); location.reload(); });
+  $('clearAllBtn').addEventListener('click', () => { clearAllData(); location.reload(); });
+  $('resetDemoBtn').addEventListener('click', () => { resetDemo(); location.reload(); });
 }

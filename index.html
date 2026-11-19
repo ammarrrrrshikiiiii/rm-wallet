@@ -34,6 +34,11 @@
       <div class="mb-3"><label class="form-label" for="u">Username</label><input id="u" class="form-control" autocomplete="username" required></div>
       <div class="mb-3"><label class="form-label" for="p">Password</label><input id="p" type="password" class="form-control" autocomplete="current-password" required></div>
       <div id="confirmBox" class="mb-3 d-none"><label class="form-label" for="p2">Confirm password</label><input id="p2" type="password" class="form-control" autocomplete="new-password"></div>
+      <div id="presetBox" class="mb-3 d-none">
+        <label class="form-label">Start with</label>
+        <div class="form-check"><input class="form-check-input" type="radio" name="preset" id="presetStarter" value="starter" checked><label class="form-check-label" for="presetStarter">Student Allowance Starter <span class="text-secondary small">— starter budget + a few sample transactions</span></label></div>
+        <div class="form-check"><input class="form-check-input" type="radio" name="preset" id="presetFresh" value="fresh"><label class="form-check-label" for="presetFresh">Start Fresh (RM 0) <span class="text-secondary small">— clean slate, set up your budget later</span></label></div>
+      </div>
       <button id="go" type="button" class="btn btn-teal w-100 py-2">Sign in</button>
       <p class="mt-3 text-center small"><span id="swText">New here?</span> <a href="#" id="sw">Create an account</a></p>
     </div>

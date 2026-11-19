@@ -1,4 +1,6 @@
 // ===== Login / register (simulated; registered users live in localStorage) =====
+import { createProfile } from './store.js';
+
 const DEMO_USER = 'demo';
 const DEMO_PASSWORD = 'Finance@123';
 
@@ -28,6 +30,7 @@ $('sw').addEventListener('click', (e) => {
   $('formTitle').textContent = registering ? 'Create account' : 'Sign in';
   $('go').textContent = registering ? 'Create account' : 'Sign in';
   $('confirmBox').classList.toggle('d-none', !registering);
+  $('presetBox').classList.toggle('d-none', !registering);
   $('swText').textContent = registering ? 'Already registered?' : 'New here?';
   $('sw').textContent = registering ? 'Sign in' : 'Create an account';
   $('msg').classList.add('d-none');
@@ -52,8 +55,11 @@ $('go').addEventListener('click', () => {
     if (u === DEMO_USER || saved[u]) return showMsg('That username is taken. Try another.');
     saved[u] = p;
     localStorage.setItem('rmUsers', JSON.stringify(saved));
-    $('sw').click();
-    return showMsg('Account created. Sign in below.', true);
+    const preset = (document.querySelector('input[name="preset"]:checked') || {}).value || 'starter';
+    createProfile(u, preset);
+    sessionStorage.setItem('rmUser', u);
+    location.href = 'dashboard.html';
+    return;
   }
 
   if ((u === DEMO_USER && p === DEMO_PASSWORD) || saved[u] === p) {
