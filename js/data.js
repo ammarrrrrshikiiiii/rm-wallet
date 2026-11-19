@@ -6,15 +6,32 @@ export const CATEGORIES = ['Food & Drink', 'Groceries', 'Transport', 'Housing', 
 // Payment sources (multi-wallet).
 export const PAYMENT_METHODS = ['Cash', 'Bank/MAE', 'E-Wallet/TnG'];
 
-// Keyword -> category rules for the quick-add auto-suggestion. First match wins.
+// Keyword -> category rules for the quick-add auto-suggestion.
+// Case-insensitive, first match wins. Short/ambiguous tokens use word boundaries (\b)
+// so e.g. "bil" (bill) does not match "bilik" (room) and "air" does not match "aircond".
+// Order matters: more specific phrases (e.g. "minyak masak", "bil air") come before
+// broader single words (e.g. "minyak", "air").
 export const KEYWORD_RULES = [
-  [/mamak|nasi|teh|kopi|roti|makan|meal|lunch|dinner|breakfast|cafe|mcd|kfc|food|drink|snack/i, 'Food & Drink'],
-  [/grocery|groceries|supermarket|mydin|jaya|tesco|aeon|pasar|vege|bahan/i, 'Groceries'],
-  [/grab|lrt|mrt|bus|petrol|minyak|parking|tol|taxi|train|ride|touch|tn.?go/i, 'Transport'],
-  [/rent|sewa|hostel|rumah|bilik/i, 'Housing'],
-  [/bill|tnb|electric|aircond|internet|unifi|maxis|celcom|digi|umobile|astro|water|phone|broadband|insurans|loan/i, 'Bills'],
-  [/book|textbook|print|stationery|course|tuition|class|notes|fee|yuran|study/i, 'Education'],
-  [/netflix|spotify|cinema|movie|game|steam|gaming|youtube|concert|entertainment/i, 'Entertainment'],
+  // Groceries / essentials (before Transport so "minyak masak" beats bare "minyak").
+  [/barang dapur|grocer|mydin|lotus|speedmart|\b99\b|\bkk\b|watson|guardian|sabun|ubat|minyak masak|beras|telur|sayur|buah|dapur|supermarket|pasar/i, 'Groceries'],
+
+  // Transport / fuel / toll / rides.
+  [/fuel|petrol|gas|oil|minyak|ron ?95|ron ?97|diesel|shell|petronas|bhp|caltex|parking|tol\b|touch.?n.?go|\btng\b|grab|lrt|mrt|ktm|\bbas\b|\bbus\b|tambang|teksi|taxi|train|ride|kereta|motor|parkir/i, 'Transport'],
+
+  // Bills & utilities (before Food so "bil air" / "aircond" win over bare "air").
+  [/bil air|air paip|aircond|\bbil\b|\bbill\b|topup|top up|reload|\bdata\b|internet|wifi|tnb|unifi|maxis|celcom|digi|umobile|elektrik|astro|broadband|insurans|loan|utilit/i, 'Bills'],
+
+  // Housing.
+  [/rent|sewa|hostel|rumah|bilik|apartment|kondo|condo|deposit|rumah sewa/i, 'Housing'],
+
+  // Food & drink.
+  [/makan|meal|lunch|dinner|breakfast|sarapan|nasi|kopi|coffee|zus|teh|\bair\b|food|minum|mamak|ayam|roti|kfc|mcd|burger|pizza|snack|dessert|cafe|restoran|warung|kedai makan/i, 'Food & Drink'],
+
+  // Education.
+  [/book|textbook|print|stationery|course|tuition|class|notes|fee|yuran|study|buku|kelas|tuisyen/i, 'Education'],
+
+  // Entertainment.
+  [/netflix|spotify|cinema|movie|game|steam|gaming|youtube|concert|entertainment|wayang|filem|konsert/i, 'Entertainment'],
 ];
 
 // Every entry is an expense. Tuple: [id, date, description, category, amount, source].

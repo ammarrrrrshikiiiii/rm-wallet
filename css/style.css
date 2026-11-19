@@ -42,6 +42,7 @@ footer a{color:#fff}
 .hero-safe .hero-value{font-family:'Bricolage Grotesque',sans-serif;font-size:clamp(2rem,5vw,2.9rem);font-weight:700;line-height:1}
 .hero-safe .hero-label{opacity:.92;font-size:.9rem}
 .hero-safe .hero-sub{font-size:.85rem;opacity:.85}
+.hero-safe .hero-daily{margin-top:.35rem;font-size:.9rem;font-weight:600;background:rgba(255,255,255,.16);display:inline-block;padding:.15rem .6rem;border-radius:999px}
 .hero-safe .badge-status{background:rgba(255,255,255,.18);color:#fff;border-radius:999px;padding:.3rem .8rem;font-size:.8rem;font-weight:600}
 
 /* ===== Quick-add bar ===== */

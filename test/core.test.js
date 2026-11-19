@@ -2,7 +2,8 @@ import { describe, expect, test } from 'bun:test';
 import {
   rm, totalExpenses, monthName, deriveCurrentMonth, monthsIn, spentInMonth,
   computeBudgets, filterTransactions, latestTransactions, escapeHtml,
-  safeToSpend, budgetTier, daysUntil, lastDayOfMonth, suggestCategory, toISODate,
+  safeToSpend, budgetTier, daysUntil, lastDayOfMonth, firstDayOfMonth, suggestCategory, toISODate,
+  inclusiveDaysBetween, remainingDaysInPeriod, dailyAllowance, expensesBetween,
   transactionsToCSV, parseCSV, DAILY_LOW,
   spendingByCategory, spendingByMerchant, monthOverMonthChange,
 } from '../js/core.js';
@@ -166,15 +167,62 @@ describe('date helpers', () => {
 });
 
 describe('keyword category suggestion', () => {
-  test('suggests from keywords', () => {
+  test('suggests from English keywords', () => {
     expect(suggestCategory('mamak nasi lemak', KEYWORD_RULES)).toBe('Food & Drink');
     expect(suggestCategory('grab to campus', KEYWORD_RULES)).toBe('Transport');
     expect(suggestCategory('unifi internet bill', KEYWORD_RULES)).toBe('Bills');
     expect(suggestCategory('mydin groceries', KEYWORD_RULES)).toBe('Groceries');
   });
+  test('suggests from Bahasa Melayu keywords', () => {
+    expect(suggestCategory('isi minyak', KEYWORD_RULES)).toBe('Transport');
+    expect(suggestCategory('minyak masak', KEYWORD_RULES)).toBe('Groceries');
+    expect(suggestCategory('sarapan nasi lemak', KEYWORD_RULES)).toBe('Food & Drink');
+    expect(suggestCategory('bayar bil elektrik', KEYWORD_RULES)).toBe('Bills');
+    expect(suggestCategory('topup data', KEYWORD_RULES)).toBe('Bills');
+    expect(suggestCategory('sewa bilik', KEYWORD_RULES)).toBe('Housing');
+  });
+  test('disambiguates short tokens', () => {
+    expect(suggestCategory('beli air mineral', KEYWORD_RULES)).toBe('Food & Drink');
+    expect(suggestCategory('bil air', KEYWORD_RULES)).toBe('Bills');
+    expect(suggestCategory('tambang bas', KEYWORD_RULES)).toBe('Transport');
+    expect(suggestCategory('ron95', KEYWORD_RULES)).toBe('Transport');
+    expect(suggestCategory('sabun', KEYWORD_RULES)).toBe('Groceries');
+    expect(suggestCategory('ubat', KEYWORD_RULES)).toBe('Groceries');
+  });
   test('returns null when nothing matches', () => {
     expect(suggestCategory('xyz', KEYWORD_RULES)).toBeNull();
     expect(suggestCategory('', KEYWORD_RULES)).toBeNull();
+  });
+});
+
+describe('budget period helpers', () => {
+  test('firstDayOfMonth', () => {
+    expect(firstDayOfMonth('2026-11')).toBe('2026-11-01');
+    expect(firstDayOfMonth('bad')).toBeNull();
+  });
+  test('inclusiveDaysBetween counts both endpoints', () => {
+    expect(inclusiveDaysBetween('2026-11-01', '2026-11-30')).toBe(30);
+    expect(inclusiveDaysBetween('2026-11-19', '2026-11-19')).toBe(1);
+    expect(inclusiveDaysBetween('2026-11-30', '2026-11-01')).toBe(0);
+    expect(inclusiveDaysBetween('2026-02-01', '2026-02-28')).toBe(28);
+  });
+  test('remainingDaysInPeriod clamps at the period boundaries', () => {
+    expect(remainingDaysInPeriod('2026-11-19', '2026-11-01', '2026-11-30')).toBe(12);
+    expect(remainingDaysInPeriod('2026-12-15', '2026-11-01', '2026-11-30')).toBe(1);
+    expect(remainingDaysInPeriod('2026-11-01', '2026-11-25', '2026-12-24')).toBe(30);
+  });
+  test('dailyAllowance divides budget by days and avoids zero', () => {
+    expect(dailyAllowance(1000, 30)).toBeCloseTo(33.33, 2);
+    expect(dailyAllowance(1000, 0)).toBe(1000);
+    expect(dailyAllowance(0, 30)).toBe(0);
+  });
+  test('expensesBetween filters by inclusive date range', () => {
+    const list = [
+      { date: '2026-11-10', type: 'expense', amount: 100 },
+      { date: '2026-11-20', type: 'expense', amount: 50 },
+      { date: '2026-12-01', type: 'expense', amount: 200 },
+    ];
+    expect(expensesBetween(list, '2026-11-01', '2026-11-30')).toBe(150);
   });
 });
 

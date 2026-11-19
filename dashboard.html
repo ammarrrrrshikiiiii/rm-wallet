@@ -25,29 +25,22 @@
     <button id="dataBtn" class="btn btn-outline-secondary btn-sm" type="button"><i class="bi bi-database me-1"></i>Data</button>
   </header>
 
-  <section class="mb-4" aria-label="Safe to spend">
+  <section class="mb-4" aria-label="Daily allowance">
     <div class="hero-safe green" id="safeCard">
       <div class="hero-top">
         <div>
-          <div class="hero-label">Safe to spend per day</div>
+          <div class="hero-label">Daily allowance</div>
           <div class="hero-value" id="safeValue">&mdash;</div>
           <div class="hero-sub" id="safeSub"></div>
-          <div id="budgetSetup" class="mt-2" hidden>
-            <div class="d-flex gap-2 align-items-end flex-wrap">
-              <div><label class="small d-block mb-1" for="monthlyBudget">Monthly budget (RM)</label><input id="monthlyBudget" type="number" class="form-control form-control-sm" min="0" style="max-width:160px" placeholder="e.g. 800"></div>
-              <button id="saveBudget" class="btn btn-sm btn-light" type="button">Save budget</button>
-            </div>
-          </div>
+          <div class="hero-daily" id="dailyNow"></div>
         </div>
         <div class="text-end">
           <span class="badge-status" id="safeBadge">&mdash;</span>
-          <div class="allowance-control mt-2">
-            <label class="me-1" for="allowanceDate">Allowance date</label>
-            <input type="date" id="allowanceDate">
-          </div>
-          <div class="mt-2">
-            <button id="topUpToggle" class="btn btn-sm btn-outline-light" type="button"><i class="bi bi-plus-lg me-1"></i>Top up budget</button>
-            <div id="topUpForm" class="d-flex gap-2 justify-content-end mt-2" hidden>
+          <div class="d-flex flex-column gap-1 align-items-end mt-2">
+            <button id="editBudgetBtn" class="btn btn-sm btn-outline-light" type="button"><i class="bi bi-pencil me-1"></i>Edit budget</button>
+            <button id="resetBudgetBtn" class="btn btn-sm btn-outline-light" type="button"><i class="bi bi-arrow-counterclockwise me-1"></i>Reset</button>
+            <button id="topUpToggle" class="btn btn-sm btn-outline-light" type="button"><i class="bi bi-plus-lg me-1"></i>Top up</button>
+            <div id="topUpForm" class="d-flex gap-2 justify-content-end" hidden>
               <input id="topUpAmount" type="number" class="form-control form-control-sm" min="0" style="max-width:120px" placeholder="RM" aria-label="Top-up amount">
               <button id="topUpApply" class="btn btn-sm btn-light" type="button">Add</button>
             </div>
@@ -100,6 +93,21 @@
   </section>
 </main>
 <div id="foot"></div>
+
+<div class="modal fade" id="budgetModal" tabindex="-1" aria-labelledby="budgetModalTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
+    <div class="modal-header"><h2 class="modal-title h5" id="budgetModalTitle">Edit budget</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+    <div class="modal-body">
+      <div class="mb-3"><label class="form-label" for="budgetAmount">Monthly budget (RM)</label><input id="budgetAmount" type="number" class="form-control" inputmode="decimal" min="0" placeholder="e.g. 1000"></div>
+      <div class="row g-2 mb-3">
+        <div class="col-6"><label class="form-label" for="budgetStart">Start date</label><input id="budgetStart" type="date" class="form-control"></div>
+        <div class="col-6"><label class="form-label" for="budgetEnd">End date</label><input id="budgetEnd" type="date" class="form-control"></div>
+      </div>
+      <div id="budgetHint" class="small text-secondary" aria-live="polite"></div>
+    </div>
+    <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button><button id="budgetSaveBtn" type="button" class="btn btn-teal">Save budget</button></div>
+  </div></div>
+</div>
 
 <div class="modal fade" id="dataModal" tabindex="-1" aria-labelledby="dataModalTitle" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered"><div class="modal-content">

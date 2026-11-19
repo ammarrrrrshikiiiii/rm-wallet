@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-11-19
+
+### Fixed
+
+- Phantom daily-allowance drop when previewing upcoming dates: remaining budget now stays fixed unless an expense inside the active period changes.
+
+### Added
+
+- Custom budget period (start date to end date) with inclusive day counting.
+- Daily allowance as the primary display (budget ÷ period days) plus current safe-to-spend.
+- Edit Budget and Reset Budget controls.
+- Bilingual (English + Bahasa Melayu) auto-category detection in quick-add.
+
 ## [0.5.0] - 2026-11-19
 
 ### Changed

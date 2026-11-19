@@ -3,15 +3,17 @@ import { CATEGORIES, PAYMENT_METHODS, KEYWORD_RULES } from './data.js';
 import { renderShell } from './app.js';
 import {
   getTransactions, addTransaction, getBudgets, getGoals, addGoal, updateGoal, removeGoal,
-  getSettings, saveSettings, topUpBudget, todayISO, isDemo, loadSampleData, clearAllData, resetDemo,
+  getSettings, saveSettings, topUpBudget, resetBudget, todayISO, isDemo, loadSampleData, clearAllData, resetDemo,
 } from './store.js';
 import {
   rm, monthName, deriveCurrentMonth, monthsIn, latestTransactions, escapeHtml, PALETTE,
-  safeToSpend, daysUntil, lastDayOfMonth, suggestCategory, totalExpenses,
+  safeToSpend, firstDayOfMonth, lastDayOfMonth, inclusiveDaysBetween, remainingDaysInPeriod,
+  dailyAllowance, expensesBetween, suggestCategory, totalExpenses,
 } from './core.js';
 
 const $ = (id) => document.getElementById(id);
 const STATUS_LABEL = { green: 'On track', amber: 'Low &mdash; be careful', red: 'Over budget' };
+const shortDate = (iso) => (iso ? `${Number(iso.slice(8, 10))} ${monthName(iso.slice(0, 7))}` : '');
 let charts = [];
 let selectedCat = CATEGORIES[0];
 
@@ -21,15 +23,24 @@ function destroyCharts() {
 }
 
 function effectiveBudget() {
+  // The monthly budget is the single source of truth for remaining/allowance math.
+  // Per-category limits are a separate guardrail feature, not part of this total.
+  return Number(getSettings().monthlyBudget) || 0;
+}
+
+// Resolve the active budget period from settings, defaulting to the data month.
+function budgetPeriod(month) {
   const settings = getSettings();
-  if (Number(settings.monthlyBudget) > 0) return Number(settings.monthlyBudget);
-  return getBudgets().reduce((s, b) => s + b.limit, 0);
+  const monthStart = month ? (firstDayOfMonth(month) || todayISO()) : todayISO();
+  const monthEnd = month ? (lastDayOfMonth(month) || todayISO()) : todayISO();
+  const start = settings.budgetStart || monthStart;
+  const end = settings.budgetEnd || settings.allowanceDate || monthEnd;
+  return { start, end };
 }
 
 function renderCharts(txns, month, cur) {
   const months = monthsIn(txns);
 
-  // Spending by month (expenses only, single series).
   charts.push(new Chart('cMonth', {
     type: 'bar',
     data: {
@@ -58,30 +69,29 @@ function renderCharts(txns, month, cur) {
   }));
 }
 
-function renderSafeToSpend(month, budgetTotal, spent) {
-  const settings = getSettings();
-  const monthEnd = month ? lastDayOfMonth(month) : todayISO();
-  const allowance = settings.allowanceDate || monthEnd;
-  $('allowanceDate').value = allowance;
+function renderDailyAllowance(budgetTotal, spent, period) {
+  const { start, end } = period;
+  const periodDays = inclusiveDaysBetween(start, end);
+  const remaining = budgetTotal - spent;
+  const baselineDaily = dailyAllowance(budgetTotal, periodDays);
+  const remDays = remainingDaysInPeriod(todayISO(), start, end);
+  const sts = safeToSpend(remaining, remDays);
 
   const card = $('safeCard');
   if (budgetTotal <= 0) {
     card.className = 'hero-safe green';
     $('safeValue').textContent = 'Set a budget';
     $('safeBadge').innerHTML = 'Getting started';
-    $('safeSub').textContent = 'Enter a monthly budget to unlock safe-to-spend.';
-    $('budgetSetup').hidden = false;
+    $('safeSub').textContent = 'Set your budget amount and period to unlock safe-to-spend.';
+    $('dailyNow').textContent = '';
     return;
   }
 
-  $('budgetSetup').hidden = true;
-  const remaining = budgetTotal - spent;
-  const days = daysUntil(todayISO(), allowance);
-  const sts = safeToSpend(remaining, days);
   card.className = 'hero-safe ' + sts.status;
-  $('safeValue').textContent = `${rm(sts.perDay)}/day`;
+  $('safeValue').textContent = `${rm(baselineDaily)}/day`;
   $('safeBadge').innerHTML = STATUS_LABEL[sts.status];
-  $('safeSub').textContent = `${rm(remaining)} remaining \u00b7 ${days} day${days === 1 ? '' : 's'} until allowance`;
+  $('safeSub').textContent = `${rm(remaining)} remaining \u00b7 ${periodDays}-day period (${shortDate(start)} \u2013 ${shortDate(end)})`;
+  $('dailyNow').textContent = `Safe to spend now: ${rm(sts.perDay)}/day`;
 }
 
 function renderChips() {
@@ -153,13 +163,13 @@ function renderAll() {
     : `Welcome back, ${sessionStorage.getItem('rmUser') || 'guest'}.`;
 
   const budgetTotal = effectiveBudget();
-  const spent = totalExpenses(cur);
+  const period = budgetPeriod(month);
+  const spent = expensesBetween(txns, period.start, period.end);
   const remaining = budgetTotal - spent;
-  const mLabel = month ? ` (${monthName(month)})` : '';
 
   $('sBudgetLabel').textContent = 'Monthly Budget';
-  $('sSpentLabel').textContent = `Spent So Far${mLabel}`;
-  $('sRemainLabel').textContent = `Remaining Budget${mLabel}`;
+  $('sSpentLabel').textContent = 'Spent So Far';
+  $('sRemainLabel').textContent = 'Remaining Budget';
   $('sBudget').textContent = rm(budgetTotal);
   $('sSpent').textContent = rm(spent);
   const remEl = $('sRemain');
@@ -171,7 +181,7 @@ function renderAll() {
     ? recent.map((t) => `<tr><td>${escapeHtml(t.date)}</td><td>${escapeHtml(t.desc)}</td><td>${escapeHtml(t.cat)}</td><td><span class="badge rounded-pill badge-source">${escapeHtml(t.source || '')}</span></td><td class="text-end amt-out">-${rm(t.amount)}</td></tr>`).join('')
     : '<tr><td colspan="5" class="text-center text-secondary py-4">No expenses yet. Add one below or load sample data.</td></tr>';
 
-  renderSafeToSpend(month, budgetTotal, spent);
+  renderDailyAllowance(budgetTotal, spent, period);
   renderGoals();
   destroyCharts();
   renderCharts(txns, month, cur);
@@ -180,14 +190,52 @@ function renderAll() {
 if (renderShell('dashboard')) {
   $('qaSource').innerHTML = PAYMENT_METHODS.map((s) => `<option>${escapeHtml(s)}</option>`).join('');
 
+  const budgetModal = new bootstrap.Modal($('budgetModal'));
+
   renderChips();
   renderAll();
 
-  $('allowanceDate').addEventListener('change', () => {
-    saveSettings({ allowanceDate: $('allowanceDate').value || null });
+  // Edit budget modal.
+  $('editBudgetBtn').addEventListener('click', () => {
+    const settings = getSettings();
+    const period = budgetPeriod(deriveCurrentMonth(getTransactions()));
+    $('budgetAmount').value = Number(settings.monthlyBudget) > 0 ? Number(settings.monthlyBudget) : '';
+    $('budgetStart').value = settings.budgetStart || period.start;
+    $('budgetEnd').value = settings.budgetEnd || period.end;
+    $('budgetHint').textContent = '';
+    budgetModal.show();
+  });
+
+  $('budgetSaveBtn').addEventListener('click', () => {
+    const amount = Number($('budgetAmount').value);
+    const start = $('budgetStart').value;
+    const end = $('budgetEnd').value;
+    if (!Number.isFinite(amount) || amount <= 0) { $('budgetHint').textContent = 'Enter a budget amount greater than zero.'; return; }
+    if (!start || !end) { $('budgetHint').textContent = 'Choose both a start and end date.'; return; }
+    if (end < start) { $('budgetHint').textContent = 'End date must be on or after the start date.'; return; }
+    saveSettings({ monthlyBudget: amount, budgetStart: start, budgetEnd: end, allowanceDate: end });
+    budgetModal.hide();
     renderAll();
   });
 
+  $('resetBudgetBtn').addEventListener('click', () => {
+    resetBudget();
+    renderAll();
+  });
+
+  $('topUpToggle').addEventListener('click', () => {
+    $('topUpForm').hidden = !$('topUpForm').hidden;
+  });
+  $('topUpApply').addEventListener('click', () => {
+    const v = Number($('topUpAmount').value);
+    if (!Number.isFinite(v) || v <= 0) return;
+    topUpBudget(v);
+    $('topUpAmount').value = '';
+    $('topUpForm').hidden = true;
+    renderAll();
+  });
+
+  // Auto-category suggestion from the note (bilingual keywords).
   $('qaNote').addEventListener('input', () => {
     const suggested = suggestCategory($('qaNote').value, KEYWORD_RULES);
     if (suggested) {
@@ -228,25 +276,6 @@ if (renderShell('dashboard')) {
     $('goalName').value = '';
     $('goalTarget').value = '';
     $('goalForm').hidden = true;
-    renderAll();
-  });
-
-  // Monthly budget quick-setup (fresh accounts) and top-up (existing budget).
-  $('saveBudget').addEventListener('click', () => {
-    const v = Number($('monthlyBudget').value);
-    if (!Number.isFinite(v) || v <= 0) return;
-    saveSettings({ monthlyBudget: v });
-    renderAll();
-  });
-  $('topUpToggle').addEventListener('click', () => {
-    $('topUpForm').hidden = !$('topUpForm').hidden;
-  });
-  $('topUpApply').addEventListener('click', () => {
-    const v = Number($('topUpAmount').value);
-    if (!Number.isFinite(v) || v <= 0) return;
-    topUpBudget(v);
-    $('topUpAmount').value = '';
-    $('topUpForm').hidden = true;
     renderAll();
   });
 
