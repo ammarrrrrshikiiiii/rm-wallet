@@ -14,7 +14,7 @@ A student's money is a small number of ringgit moving between a handful of bucke
 
 - ⚡ **Zero dependencies, zero build.** It's plain HTML, CSS and ES modules. Nothing to install or compile.
 - 📊 **Charts that mean something.** Income vs expenses by month, spending by category, budget vs actual.
-- 💸 **Budgets that warn you.** Progress bars go amber at 80% and red past 100%.
+- 💸 **Budgets that warn you.** Colour-coded guardrails: green under 70%, amber 70–89%, red 90%+.
 - 🔒 **Hardened by default.** Content-Security-Policy, Subresource Integrity, and XSS-safe rendering.
 - 🧪 **Actually tested.** A unit-test suite and static-integrity checks that run in CI.
 
@@ -29,7 +29,7 @@ bun start
 # 2. Open the printed URL in your browser
 #    http://localhost:8080
 
-# 3. Click "Use demo account", then "Sign in"
+# 3. Click "Try Demo Instantly"
 ```
 
 That's it — you're looking at the dashboard in under a minute.
@@ -46,12 +46,16 @@ You can also register a new account — it's stored in your browser's `localStor
 
 ## Features
 
-- **Login / register** with a demo account, validation, and a one-click "Use demo account" shortcut.
-- **Dashboard** — balance, latest-month income/spend/savings rate, income-vs-expense bar chart, spending doughnut, and the five most recent transactions.
-- **Transactions** — search and filter by type and category, newest first.
-- **Budgets** — per-category progress cards, a budget-vs-actual chart, and a table showing what's left (or how far over you are).
-- **Responsive & accessible** — works on mobile, with `aria-live` status, labelled charts, `scope` on table headers, and WCAG-AA colour contrast.
-- **Security basics** — CSP, SRI-pinned CDN assets, HTML output escaping (stored-XSS fix), no inline scripts, and a traversal-guarded dev server.
+- **One-click demo** — "Try Demo Instantly" signs you in with sample data kept only in your browser.
+- **Safe-to-spend hero** — remaining monthly budget divided by days until your allowance date, colour-coded green/amber/red with a customisable reset date.
+- **Quick-add expense bar** — amount, note and payment source with one-tap category chips and keyword auto-suggestion.
+- **Multi-wallet** — tag every transaction by payment source (Cash, Bank/MAE, E-Wallet/TnG) and filter by it.
+- **Tabung (savings goals)** — visual savings jars with progress fills and top-ups.
+- **Budget guardrails** — colour-coded progress bars: green <70%, amber 70–89%, red 90%+.
+- **Backup & portability** — export/import your data as JSON or CSV.
+- **Installable (PWA)** — add RM Wallet to your home screen with a manifest, icons and an offline service worker.
+- **Responsive & accessible** — mobile-first, with `aria-live` status, labelled charts and WCAG-AA contrast.
+- **Security basics** — CSP, SRI-pinned CDN assets, HTML output escaping, and a traversal-guarded dev server.
 
 ## Commands
 
@@ -76,8 +80,13 @@ Or via `make`: `make start`, `make test`, `make check`.
 ├── js/
 │   ├── core.js           pure domain logic (unit-tested, DOM-free)
 │   ├── data.js           sample data (Jun–Nov 2026)
+│   ├── store.js          localStorage persistence layer
 │   ├── app.js            auth guard + navbar/footer shell
+│   ├── pwa.js            service-worker registration
 │   └── *.js              one module per page
+├── assets/               favicon + PWA icons
+├── manifest.json         PWA manifest
+├── sw.js                 offline service worker
 ├── test/                 bun test suites
 ├── scripts/              check.mjs, screenshot.mjs
 ├── docs/                 architecture, ADRs, roadmap, screenshots
@@ -138,7 +147,7 @@ Data flows one way: static sample data (`js/data.js`) → pure functions (`js/co
 
 ## Testing & CI
 
-- **Unit tests** (`bun test`) cover the currency formatter, totals, month helpers, budget math, filtering, savings rate and HTML escaping.
+- **Unit tests** (`bun test`) cover the currency formatter, totals, month/budget math, filtering, savings rate, safe-to-spend, guardrail tiers, keyword suggestion, CSV round-trips and HTML escaping.
 - **Integrity checks** (`bun run check`) verify that every local asset resolves, no inline scripts remain, all CDN assets carry SRI, and the core modules stay DOM-free.
 - **GitHub Actions** runs both on every push and pull request; **Dependabot** keeps Actions and the dev dependency current.
 
@@ -150,7 +159,7 @@ Data flows one way: static sample data (`js/data.js`) → pure functions (`js/co
 
 ## Roadmap
 
-See [docs/roadmap.md](docs/roadmap.md) — short term: transactions CRUD with `localStorage` persistence and CSV export; medium term: a real backend with authentication; long term: PWA/offline support.
+See [docs/roadmap.md](docs/roadmap.md) — next up: edit/delete transactions and editable budget limits; then a real backend with authentication.
 
 ## Contributing & license
 

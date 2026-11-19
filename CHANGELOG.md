@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-19
+
+### Added
+
+- One-click "Try Demo Instantly" login.
+- Daily safe-to-spend hero card with a customisable allowance date.
+- Quick-add expense bar with preset category chips and keyword auto-suggestion.
+- Multi-wallet payment sources (Cash, Bank/MAE, E-Wallet/TnG).
+- Tabung savings goals with visual jars.
+- Budget guardrails (green <70%, amber 70-89%, red 90%+).
+- JSON and CSV export/import for backup.
+- PWA manifest, icons and offline service worker.
+
+### Changed
+
+- Expanded category taxonomy (Food & Drink, Groceries, Bills, Other) and added payment sources to sample data.
+- Budgets and transactions now read through a localStorage persistence layer (`js/store.js`).
+
 ## [0.1.0] - 2026-11-16
 
 ### Added
