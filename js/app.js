@@ -3,7 +3,7 @@ import { escapeHtml } from './core.js';
 
 export const PAGES = [
   ['dashboard.html', 'Dashboard', 'bi-speedometer2'],
-  ['transactions.html', 'Transactions', 'bi-receipt'],
+  ['transactions.html', 'Expenses', 'bi-wallet2'],
   ['budgets.html', 'Budgets', 'bi-piggy-bank'],
 ];
 
